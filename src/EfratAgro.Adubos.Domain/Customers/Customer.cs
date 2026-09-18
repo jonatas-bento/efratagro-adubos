@@ -10,21 +10,10 @@ public sealed class Customer
         string name,
         string? phone = null)
     {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            throw new ArgumentException(
-                "Customer name is required.",
-                nameof(name));
-        }
-
         Id = Guid.NewGuid();
-        Name = name.Trim();
-        NormalizedName = Normalize(name);
 
-        Phone =
-            string.IsNullOrWhiteSpace(phone)
-                ? null
-                : phone.Trim();
+        SetName(name);
+        SetPhone(phone);
 
         IsActive = true;
         CreatedAtUtc = DateTime.UtcNow;
@@ -44,11 +33,56 @@ public sealed class Customer
 
     public DateTime? UpdatedAtUtc { get; private set; }
 
-    private static string Normalize(
-        string value)
+    public void Update(
+        string name,
+        string? phone)
     {
-        return value
-            .Trim()
-            .ToUpperInvariant();
+        SetName(name);
+        SetPhone(phone);
+
+        UpdatedAtUtc =
+            DateTime.UtcNow;
+    }
+
+    public void Deactivate()
+    {
+        if (!IsActive)
+        {
+            return;
+        }
+
+        IsActive = false;
+
+        UpdatedAtUtc =
+            DateTime.UtcNow;
+    }
+
+    private void SetName(
+        string name)
+    {
+        var trimmed =
+            name?.Trim()
+            ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(trimmed))
+        {
+            throw new ArgumentException(
+                "Customer name is required.",
+                nameof(name));
+        }
+
+        Name = trimmed;
+
+        NormalizedName =
+            trimmed.ToUpperInvariant();
+    }
+
+    private void SetPhone(
+        string? phone)
+    {
+        Phone =
+            string.IsNullOrWhiteSpace(phone)
+                ? null
+                : phone.Trim();
     }
 }

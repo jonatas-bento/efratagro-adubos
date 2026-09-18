@@ -1,4 +1,5 @@
 using EfratAgro.Adubos.Application.Catalog;
+using EfratAgro.Adubos.Application.Customers;
 using EfratAgro.Adubos.Application.Deliveries;
 using EfratAgro.Adubos.Application.Inventory;
 using EfratAgro.Adubos.Application.Purchases;
@@ -185,6 +186,93 @@ app.MapPatch(
         }
     })
     .WithTags("Deliveries");
+
+
+app.MapGet(
+    "/api/customers",
+    async (
+        string? q,
+        int? take,
+        ICustomerQueryService customers,
+        CancellationToken cancellationToken) =>
+        Results.Ok(
+            await customers.GetAsync(
+                q,
+                take ?? 100,
+                cancellationToken)))
+    .WithTags("Customers");
+
+app.MapGet(
+    "/api/customers/{customerId:guid}",
+    async (
+        Guid customerId,
+        ICustomerQueryService customers,
+        CancellationToken cancellationToken) =>
+    {
+        var customer =
+            await customers.GetByIdAsync(
+                customerId,
+                cancellationToken);
+
+        return customer is null
+            ? Results.NotFound()
+            : Results.Ok(customer);
+    })
+    .WithTags("Customers");
+
+app.MapPost(
+    "/api/customers",
+    async (
+        CreateCustomerRequest request,
+        ICustomerService customers,
+        CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var id =
+                await customers.CreateAsync(
+                    request,
+                    cancellationToken);
+
+            return Results.Created(
+                $"/api/customers/{id}",
+                new { id });
+        }
+        catch (ArgumentException ex)
+        {
+            return Results.BadRequest(
+                new { error = ex.Message });
+        }
+    })
+    .WithTags("Customers");
+
+app.MapPut(
+    "/api/customers/{customerId:guid}",
+    async (
+        Guid customerId,
+        UpdateCustomerRequest request,
+        ICustomerService customers,
+        CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            await customers.UpdateAsync(
+                customerId,
+                request,
+                cancellationToken);
+
+            return Results.NoContent();
+        }
+        catch (Exception ex)
+            when (
+                ex is ArgumentException or
+                InvalidOperationException)
+        {
+            return Results.BadRequest(
+                new { error = ex.Message });
+        }
+    })
+    .WithTags("Customers");
 
 app.Run();
 

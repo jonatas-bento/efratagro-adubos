@@ -38,6 +38,14 @@ public sealed class SaleConfiguration
         builder.Property(x => x.DeliveredAtUtc)
             .HasColumnType("datetime(6)");
 
+        builder.Property(x => x.Origin)
+            .HasConversion<int>()
+            .HasDefaultValue(
+                SaleOrigin.Operational)
+            .HasSentinel(
+                SaleOrigin.Unspecified)
+            .IsRequired();
+
         builder.Property(x => x.CreatedAtUtc)
             .HasColumnType("datetime(6)")
             .IsRequired();

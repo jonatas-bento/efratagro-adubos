@@ -11,7 +11,8 @@ public sealed class Sale
     public Sale(
         Guid customerId,
         DateTime occurredAtUtc,
-        DeliveryMethod deliveryMethod = DeliveryMethod.Delivery)
+        DeliveryMethod deliveryMethod = DeliveryMethod.Delivery,
+        SaleOrigin origin = SaleOrigin.Operational)
     {
         if (customerId == Guid.Empty)
         {
@@ -27,12 +28,22 @@ public sealed class Sale
                 nameof(deliveryMethod));
         }
 
+        if (origin == SaleOrigin.Unspecified)
+        {
+            throw new ArgumentException(
+                "Sale origin is required.",
+                nameof(origin));
+        }
+
         Id = Guid.NewGuid();
+
         CustomerId = customerId;
         OccurredAtUtc = occurredAtUtc;
 
         DeliveryMethod = deliveryMethod;
         DeliveryStatus = DeliveryStatus.Pending;
+
+        Origin = origin;
 
         CreatedAtUtc = DateTime.UtcNow;
     }
@@ -51,17 +62,23 @@ public sealed class Sale
 
     public DateTime? DeliveredAtUtc { get; private set; }
 
+    public SaleOrigin Origin { get; private set; }
+
     public DateTime CreatedAtUtc { get; private set; }
 
     public void MarkDelivered(
         DateTime deliveredAtUtc)
     {
-        if (DeliveryStatus == DeliveryStatus.Delivered)
+        if (DeliveryStatus ==
+            DeliveryStatus.Delivered)
         {
             return;
         }
 
-        DeliveryStatus = DeliveryStatus.Delivered;
-        DeliveredAtUtc = deliveredAtUtc;
+        DeliveryStatus =
+            DeliveryStatus.Delivered;
+
+        DeliveredAtUtc =
+            deliveredAtUtc;
     }
 }

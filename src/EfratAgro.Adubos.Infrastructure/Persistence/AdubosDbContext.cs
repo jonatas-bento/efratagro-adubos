@@ -1,5 +1,6 @@
 using EfratAgro.Adubos.Domain.Catalog;
 using EfratAgro.Adubos.Domain.Customers;
+using EfratAgro.Adubos.Domain.Finance;
 using EfratAgro.Adubos.Domain.Inventory;
 using EfratAgro.Adubos.Domain.Legacy;
 using EfratAgro.Adubos.Domain.Purchases;
@@ -37,6 +38,13 @@ public sealed class AdubosDbContext
     public DbSet<Sale> Sales => Set<Sale>();
 
     public DbSet<SaleItem> SaleItems => Set<SaleItem>();
+
+    public DbSet<Receivable> Receivables =>
+        Set<Receivable>();
+
+    public DbSet<Payment> Payments =>
+        Set<Payment>();
+
 
     public DbSet<Purchase> Purchases => Set<Purchase>();
 

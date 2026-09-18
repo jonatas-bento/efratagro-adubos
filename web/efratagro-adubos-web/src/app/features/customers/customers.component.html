@@ -1,0 +1,429 @@
+<main class="page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">
+        Comercial
+      </span>
+
+      <h1>Clientes</h1>
+
+      <p>
+        Cadastro, histórico de compras e
+        acompanhamento financeiro.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="primary-button"
+      (click)="toggleForm()"
+    >
+      + Novo cliente
+    </button>
+  </header>
+
+  @if (error()) {
+    <section class="message error">
+      {{ error() }}
+    </section>
+  }
+
+  @if (showForm()) {
+    <section class="panel new-customer">
+      <div>
+        <span class="section-label">
+          Cadastro
+        </span>
+
+        <h2>Novo cliente</h2>
+      </div>
+
+      <form
+        [formGroup]="customerForm"
+        (ngSubmit)="createCustomer()"
+      >
+        <label>
+          <span>Nome</span>
+
+          <input
+            type="text"
+            formControlName="name"
+            placeholder="Nome do cliente"
+          />
+        </label>
+
+        <label>
+          <span>Telefone</span>
+
+          <input
+            type="tel"
+            formControlName="phone"
+            placeholder="Opcional"
+          />
+        </label>
+
+        <button
+          type="submit"
+          class="primary-button"
+          [disabled]="saving()"
+        >
+          {{
+            saving()
+              ? 'Salvando...'
+              : 'Cadastrar cliente'
+          }}
+        </button>
+      </form>
+    </section>
+  }
+
+  <section class="summary-grid">
+    <article class="summary-card">
+      <span>Clientes</span>
+
+      <strong>
+        {{ totalCustomers() }}
+      </strong>
+
+      <small>na consulta atual</small>
+    </article>
+
+    <article class="summary-card">
+      <span>Volume comercial</span>
+
+      <strong>
+        {{
+          totalPurchased()
+            | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+        }}
+      </strong>
+
+      <small>vendas registradas</small>
+    </article>
+
+    <article class="summary-card">
+      <span>Em aberto</span>
+
+      <strong>
+        {{
+          totalOutstanding()
+            | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+        }}
+      </strong>
+
+      <small>recebíveis não quitados</small>
+    </article>
+
+    <article
+      class="summary-card"
+      [class.warning]="financialPending() > 0"
+    >
+      <span>Sem financeiro</span>
+
+      <strong>
+        {{ financialPending() }}
+      </strong>
+
+      <small>
+        vendas sem programação
+      </small>
+    </article>
+  </section>
+
+  <section class="panel">
+    <div class="toolbar">
+      <div>
+        <span class="section-label">
+          Carteira
+        </span>
+
+        <h2>Clientes cadastrados</h2>
+      </div>
+
+      <input
+        type="search"
+        [formControl]="search"
+        placeholder="Buscar cliente ou telefone..."
+      />
+    </div>
+
+    @if (loading()) {
+      <div class="empty-state">
+        Carregando clientes...
+      </div>
+    } @else if (
+      customers().length === 0
+    ) {
+      <div class="empty-state">
+        Nenhum cliente encontrado.
+      </div>
+    } @else {
+      <div class="customer-list">
+        @for (
+          customer of customers();
+          track customer.id
+        ) {
+          <button
+            type="button"
+            class="customer-card"
+            (click)="openCustomer(customer.id)"
+          >
+            <div class="customer-main">
+              <strong>
+                {{ customer.name }}
+              </strong>
+
+              <span>
+                {{
+                  customer.phone ||
+                  'Telefone não informado'
+                }}
+              </span>
+            </div>
+
+            <div class="customer-metrics">
+              <div>
+                <span>Compras</span>
+                <strong>
+                  {{ customer.salesCount }}
+                </strong>
+              </div>
+
+              <div>
+                <span>Comprado</span>
+                <strong>
+                  {{
+                    customer.totalPurchased
+                      | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+                  }}
+                </strong>
+              </div>
+
+              <div>
+                <span>Em aberto</span>
+                <strong>
+                  {{
+                    customer.outstandingAmount
+                      | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+                  }}
+                </strong>
+              </div>
+
+              @if (
+                customer.salesWithoutFinancialSchedule > 0
+              ) {
+                <div class="financial-warning">
+                  {{
+                    customer.salesWithoutFinancialSchedule
+                  }}
+                  venda(s) sem financeiro
+                </div>
+              }
+            </div>
+          </button>
+        }
+      </div>
+    }
+  </section>
+
+  @if (selectedCustomer(); as customer) {
+    <div
+      class="details-backdrop"
+      (click)="closeCustomer()"
+    >
+      <aside
+        class="details-panel"
+        (click)="$event.stopPropagation()"
+      >
+        <button
+          type="button"
+          class="close-button"
+          (click)="closeCustomer()"
+        >
+          ×
+        </button>
+
+        @if (detailsLoading()) {
+          <div class="empty-state">
+            Carregando...
+          </div>
+        } @else {
+          <span class="eyebrow">
+            Cliente
+          </span>
+
+          <h2 class="customer-title">
+            {{ customer.name }}
+          </h2>
+
+          <p class="customer-phone">
+            {{
+              customer.phone ||
+              'Telefone não informado'
+            }}
+          </p>
+
+          <div class="detail-summary">
+            <div>
+              <span>Compras</span>
+              <strong>
+                {{ customer.salesCount }}
+              </strong>
+            </div>
+
+            <div>
+              <span>Total comprado</span>
+              <strong>
+                {{
+                  customer.totalPurchased
+                    | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+                }}
+              </strong>
+            </div>
+
+            <div>
+              <span>Recebido</span>
+              <strong>
+                {{
+                  customer.financial.totalReceived
+                    | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+                }}
+              </strong>
+            </div>
+
+            <div>
+              <span>Em aberto</span>
+              <strong>
+                {{
+                  customer.financial.outstandingAmount
+                    | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+                }}
+              </strong>
+            </div>
+          </div>
+
+          @if (
+            customer.financial
+              .salesWithoutFinancialSchedule > 0
+          ) {
+            <div class="financial-alert">
+              <strong>
+                Atenção financeira
+              </strong>
+
+              <span>
+                {{
+                  customer.financial
+                    .salesWithoutFinancialSchedule
+                }}
+                venda(s) ainda não possuem
+                programação financeira.
+              </span>
+            </div>
+          }
+
+          <section class="detail-section">
+            <span class="section-label">
+              Produtos
+            </span>
+
+            <h3>Produtos comprados</h3>
+
+            @if (
+              customer.products.length === 0
+            ) {
+              <p class="muted">
+                Nenhum produto comprado.
+              </p>
+            } @else {
+              <div class="product-history">
+                @for (
+                  product of customer.products;
+                  track product.productId
+                ) {
+                  <div>
+                    <strong>
+                      {{ product.productName }}
+                    </strong>
+
+                    <span>
+                      {{
+                        product.totalQuantity
+                          | number:'1.0-3':'pt-BR'
+                      }}
+                      unidades
+                    </span>
+
+                    <span>
+                      {{
+                        product.totalValue
+                          | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+                      }}
+                    </span>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+
+          <section class="detail-section">
+            <span class="section-label">
+              Histórico
+            </span>
+
+            <h3>Compras do cliente</h3>
+
+            @if (
+              customer.purchases.length === 0
+            ) {
+              <p class="muted">
+                Nenhuma compra registrada.
+              </p>
+            } @else {
+              <div class="purchase-history">
+                @for (
+                  purchase of customer.purchases;
+                  track purchase.saleId
+                ) {
+                  <article>
+                    <div>
+                      <strong>
+                        {{
+                          purchase.totalValue
+                            | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+                        }}
+                      </strong>
+
+                      <span>
+                        {{
+                          purchase.occurredAtUtc
+                            | date:'dd/MM/yyyy HH:mm'
+                        }}
+                        · {{ purchase.origin }}
+                      </span>
+                    </div>
+
+                    @for (
+                      product of purchase.products;
+                      track product.productId
+                    ) {
+                      <p>
+                        {{ product.productName }}
+                        ·
+                        {{
+                          product.quantity
+                            | number:'1.0-3':'pt-BR'
+                        }}
+                        un.
+                      </p>
+                    }
+                  </article>
+                }
+              </div>
+            }
+          </section>
+        }
+      </aside>
+    </div>
+  }
+</main>
