@@ -37,6 +37,10 @@ public static class DependencyInjection
             ISaleService,
             SaleService>();
 
+        services.AddScoped<
+            ISalesQueryService,
+            SalesQueryService>();
+
         return services;
     }
 }

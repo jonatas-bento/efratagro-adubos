@@ -1,0 +1,279 @@
+<main class="page">
+  <header class="page-header">
+    <span class="eyebrow">
+      Operações
+    </span>
+
+    <h1>Vendas</h1>
+
+    <p>
+      Registre uma venda e atualize o estoque
+      automaticamente.
+    </p>
+  </header>
+
+  @if (success()) {
+    <section class="message success">
+      Venda registrada com sucesso.
+      Total:
+      <strong>
+        {{
+          success()!.totalValue
+            | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+        }}
+      </strong>
+    </section>
+  }
+
+  @if (error()) {
+    <section class="message error">
+      {{ error() }}
+    </section>
+  }
+
+  <div class="sales-layout">
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <span class="section-label">
+            Nova venda
+          </span>
+
+          <h2>Dados da venda</h2>
+        </div>
+      </div>
+
+      <form
+        [formGroup]="form"
+        (ngSubmit)="submit()"
+      >
+        <div class="customer-grid">
+          <label>
+            <span>Cliente</span>
+
+            <input
+              type="text"
+              formControlName="customerName"
+              placeholder="Nome do cliente"
+              autocomplete="off"
+            >
+          </label>
+
+          <label>
+            <span>Telefone</span>
+
+            <input
+              type="tel"
+              formControlName="customerPhone"
+              placeholder="Opcional"
+              autocomplete="off"
+            >
+          </label>
+        </div>
+
+        <div
+          class="items"
+          formArrayName="items"
+        >
+          <div class="items-heading">
+            <div>
+              <span class="section-label">
+                Produtos
+              </span>
+
+              <h2>Itens da venda</h2>
+            </div>
+
+            <button
+              type="button"
+              class="secondary-button"
+              (click)="addItem()"
+            >
+              + Adicionar produto
+            </button>
+          </div>
+
+          @for (
+            item of items.controls;
+            track $index;
+            let index = $index
+          ) {
+            <article
+              class="sale-item"
+              [formGroupName]="index"
+            >
+              <label class="product-field">
+                <span>Produto</span>
+
+                <select
+                  formControlName="productId"
+                >
+                  <option value="">
+                    Selecione...
+                  </option>
+
+                  @for (
+                    product of availableProducts();
+                    track product.productId
+                  ) {
+                    <option
+                      [value]="product.productId"
+                    >
+                      {{ product.productName }}
+                      · {{ product.supplierName }}
+                      · {{ product.quantity | number:'1.0-3':'pt-BR' }}
+                      disponíveis
+                    </option>
+                  }
+                </select>
+
+                @if (
+                  item.controls.productId.value
+                ) {
+                  <small>
+                    Saldo disponível:
+                    {{
+                      availableFor(
+                        item.controls.productId.value
+                      )
+                        | number:'1.0-3':'pt-BR'
+                    }}
+                  </small>
+                }
+              </label>
+
+              <label>
+                <span>Quantidade</span>
+
+                <input
+                  type="number"
+                  formControlName="quantity"
+                  min="0.001"
+                  step="0.001"
+                >
+              </label>
+
+              <label>
+                <span>Preço unitário</span>
+
+                <input
+                  type="number"
+                  formControlName="unitPrice"
+                  min="0"
+                  step="0.01"
+                >
+              </label>
+
+              <div class="item-total">
+                <span>Total</span>
+
+                <strong>
+                  {{
+                    itemTotal(index)
+                      | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+                  }}
+                </strong>
+              </div>
+
+              @if (items.length > 1) {
+                <button
+                  type="button"
+                  class="remove-button"
+                  (click)="removeItem(index)"
+                  aria-label="Remover item"
+                >
+                  Remover
+                </button>
+              }
+            </article>
+          }
+        </div>
+
+        <footer class="form-footer">
+          <div class="sale-total">
+            <span>Total da venda</span>
+
+            <strong>
+              {{
+                saleTotal()
+                  | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+              }}
+            </strong>
+          </div>
+
+          <button
+            type="submit"
+            class="primary-button"
+            [disabled]="saving()"
+          >
+            {{
+              saving()
+                ? 'Registrando...'
+                : 'Registrar venda'
+            }}
+          </button>
+        </footer>
+      </form>
+    </section>
+
+    <aside class="panel recent-panel">
+      <div class="panel-header">
+        <div>
+          <span class="section-label">
+            Histórico
+          </span>
+
+          <h2>Vendas recentes</h2>
+        </div>
+      </div>
+
+      @if (loading()) {
+        <div class="empty-state">
+          Carregando...
+        </div>
+      } @else if (
+        recentSales().length === 0
+      ) {
+        <div class="empty-state">
+          Nenhuma venda registrada.
+        </div>
+      } @else {
+        <div class="recent-list">
+          @for (
+            sale of recentSales();
+            track sale.saleId
+          ) {
+            <article class="recent-sale">
+              <div>
+                <strong>
+                  {{ sale.customerName }}
+                </strong>
+
+                <span>
+                  {{
+                    sale.occurredAtUtc
+                      | date:'dd/MM/yyyy HH:mm'
+                  }}
+                </span>
+              </div>
+
+              <div class="recent-value">
+                <strong>
+                  {{
+                    sale.totalValue
+                      | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+                  }}
+                </strong>
+
+                <span>
+                  {{ sale.totalQuantity | number:'1.0-3':'pt-BR' }}
+                  unidades
+                </span>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </aside>
+  </div>
+</main>

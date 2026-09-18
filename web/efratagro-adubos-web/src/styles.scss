@@ -1,24 +1,69 @@
+:root {
+  /*
+   * EfratAgro brand palette
+   *
+   * Approximated from the client-provided raster logo.
+   * Replace with official brand values if a brand manual
+   * is supplied later.
+   */
+
+  --brand-primary: #19886f;
+  --brand-primary-dark: #116657;
+  --brand-primary-deep: #123d32;
+
+  --brand-lime: #71c62c;
+  --brand-orange: #fe3b00;
+
+  --brand-white: #ffffff;
+
+  --brand-ink: #17251d;
+  --brand-text: #34483a;
+  --brand-muted: #718077;
+
+  --brand-background: #f6f8f5;
+  --brand-surface: #ffffff;
+  --brand-surface-soft: #f1f6f2;
+
+  --brand-border: #dce6df;
+
+  --brand-danger: #a34f4a;
+  --brand-success: #28734a;
+
+  --shadow-soft:
+    0 5px 20px
+    rgb(23 56 42 / 0.05);
+
+  --radius-sm: 0.7rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.25rem;
+}
+
 * {
   box-sizing: border-box;
 }
 
 html {
   min-height: 100%;
-  background: #f6f8f5;
+  background:
+    var(--brand-background);
 }
 
 body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+
   background:
     linear-gradient(
       180deg,
-      #f3f7f2 0,
-      #f8faf7 22rem,
-      #f6f8f5 100%
+      #f2f8f4 0,
+      var(--brand-background) 24rem,
+      #f8faf8 100%
     );
-  color: #1c2d20;
+
+  color:
+    var(--brand-ink);
+
   font-family:
     Inter,
     ui-sans-serif,
@@ -34,4 +79,15 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color:
+    transparent;
+}
+
+::selection {
+  background:
+    rgb(113 198 44 / 0.25);
 }

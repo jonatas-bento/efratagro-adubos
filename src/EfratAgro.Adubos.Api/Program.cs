@@ -47,6 +47,23 @@ app.MapGet(
     .WithName("GetInventory")
     .WithTags("Inventory");
 
+app.MapGet(
+    "/api/sales",
+    async (
+        int? take,
+        ISalesQueryService sales,
+        CancellationToken cancellationToken) =>
+    {
+        var result =
+            await sales.GetRecentAsync(
+                take ?? 20,
+                cancellationToken);
+
+        return Results.Ok(result);
+    })
+    .WithName("GetRecentSales")
+    .WithTags("Sales");
+
 app.MapPost(
     "/api/sales",
     async (
