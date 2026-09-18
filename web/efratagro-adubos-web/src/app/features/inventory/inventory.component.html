@@ -1,0 +1,117 @@
+<main class="page">
+  <header class="hero">
+    <div class="brand">
+      <span class="brand-mark">EA</span>
+
+      <div>
+        <span class="eyebrow">EfratAgro</span>
+        <h1>Estoque</h1>
+      </div>
+    </div>
+
+    <p>
+      Consulte os produtos disponíveis no armazém
+      de forma rápida e simples.
+    </p>
+  </header>
+
+  <section
+    class="summary"
+    aria-label="Resumo do estoque"
+  >
+    <article class="summary-card">
+      <span>Produtos</span>
+      <strong>{{ totalProducts() }}</strong>
+      <small>cadastrados</small>
+    </article>
+
+    <article class="summary-card">
+      <span>Com estoque</span>
+      <strong>{{ productsWithStock() }}</strong>
+      <small>disponíveis</small>
+    </article>
+
+    <article class="summary-card">
+      <span>Estoque total</span>
+
+      <strong>
+        {{ totalQuantity() | number:'1.0-3':'pt-BR' }}
+      </strong>
+
+      <small>unidades</small>
+    </article>
+  </section>
+
+  <section class="search-section">
+    <label for="inventory-search">
+      Buscar produto ou fornecedor
+    </label>
+
+    <div class="search-box">
+      <span aria-hidden="true">⌕</span>
+
+      <input
+        id="inventory-search"
+        type="search"
+        autocomplete="off"
+        placeholder="Ex.: 18-04, Heringer, calcário..."
+        [ngModel]="search()"
+        (ngModelChange)="onSearchChange($event)"
+      >
+    </div>
+  </section>
+
+  @if (loading()) {
+    <section class="state">
+      <div class="spinner"></div>
+      <span>Carregando estoque...</span>
+    </section>
+  } @else if (error()) {
+    <section class="state state-error">
+      {{ error() }}
+    </section>
+  } @else if (items().length === 0) {
+    <section class="state">
+      Nenhum produto encontrado.
+    </section>
+  } @else {
+    <div class="results-header">
+      <span>
+        {{ items().length }}
+        {{ items().length === 1 ? 'produto encontrado' : 'produtos encontrados' }}
+      </span>
+    </div>
+
+    <section class="inventory">
+      @for (
+        item of items();
+        track item.productId
+      ) {
+        <article class="product-card">
+          <div class="product-info">
+            <span class="supplier">
+              {{ item.supplierName }}
+            </span>
+
+            <strong>
+              {{ item.productName }}
+            </strong>
+          </div>
+
+          <div
+            class="stock"
+            [class.stock-empty]="item.quantity <= 0"
+          >
+            <strong>
+              {{ item.quantity | number:'1.0-3':'pt-BR' }}
+            </strong>
+
+            <span>
+              {{ item.quantity === 1 ? 'unidade' : 'unidades' }}
+            </span>
+          </div>
+        </article>
+      }
+    </section>
+  }
+</main>

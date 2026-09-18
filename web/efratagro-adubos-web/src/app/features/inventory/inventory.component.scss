@@ -1,0 +1,269 @@
+:host {
+  display: block;
+}
+
+.page {
+  width: min(100% - 2rem, 1180px);
+  margin: 0 auto;
+  padding: 1.5rem 0 4rem;
+}
+
+.hero {
+  padding: 1rem 0 1.75rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.brand-mark {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border-radius: 0.9rem;
+  background: #245f34;
+  color: white;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: #54805d;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  color: #17281b;
+  font-size: clamp(2rem, 7vw, 3.3rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.hero p {
+  max-width: 38rem;
+  margin: 1rem 0 0;
+  color: #68766b;
+  line-height: 1.6;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.summary-card {
+  padding: 1rem 1.1rem;
+  border: 1px solid #dde6df;
+  border-radius: 1rem;
+  background: #ffffff;
+  box-shadow: 0 4px 18px rgb(35 68 43 / 0.04);
+}
+
+.summary-card span {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #718076;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.summary-card strong {
+  display: block;
+  color: #1c4326;
+  font-size: 1.65rem;
+  letter-spacing: -0.03em;
+}
+
+.summary-card small {
+  color: #8b968d;
+}
+
+.search-section {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin: 0 -0.5rem;
+  padding: 0.8rem 0.5rem 1rem;
+  background: rgb(246 248 245 / 0.94);
+  backdrop-filter: blur(10px);
+}
+
+.search-section label {
+  display: block;
+  margin-bottom: 0.45rem;
+  color: #405046;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0 0.95rem;
+  border: 1px solid #ccd8ce;
+  border-radius: 0.95rem;
+  background: #ffffff;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.search-box:focus-within {
+  border-color: #4d8057;
+  box-shadow: 0 0 0 3px rgb(77 128 87 / 0.12);
+}
+
+.search-box span {
+  color: #6b7d6f;
+  font-size: 1.35rem;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 1rem 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+}
+
+.results-header {
+  margin: 0.4rem 0 0.75rem;
+  color: #7b887e;
+  font-size: 0.8rem;
+}
+
+.inventory {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.product-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 4.25rem;
+  padding: 1rem;
+  border: 1px solid #e0e8e1;
+  border-radius: 1rem;
+  background: #ffffff;
+  box-shadow: 0 3px 12px rgb(35 68 43 / 0.035);
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    border-color 140ms ease;
+}
+
+.product-card:hover {
+  transform: translateY(-1px);
+  border-color: #cddbcf;
+  box-shadow: 0 6px 18px rgb(35 68 43 / 0.07);
+}
+
+.product-info {
+  min-width: 0;
+}
+
+.product-info strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: #1c2d20;
+  font-size: 0.95rem;
+}
+
+.supplier {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: #69816e;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stock {
+  flex: 0 0 auto;
+  min-width: 5rem;
+  text-align: right;
+}
+
+.stock strong {
+  display: block;
+  color: #276337;
+  font-size: 1.15rem;
+}
+
+.stock span {
+  color: #7b897d;
+  font-size: 0.7rem;
+}
+
+.stock-empty strong {
+  color: #9a5555;
+}
+
+.state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 9rem;
+  padding: 2rem;
+  border: 1px solid #e0e8e1;
+  border-radius: 1rem;
+  background: #ffffff;
+  color: #68746a;
+  text-align: center;
+}
+
+.state-error {
+  color: #9b3030;
+}
+
+.spinner {
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 2px solid #d7e1d9;
+  border-top-color: #397247;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (min-width: 700px) {
+  .page {
+    padding-top: 2.5rem;
+  }
+
+  .summary {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .inventory {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1050px) {
+  .inventory {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
