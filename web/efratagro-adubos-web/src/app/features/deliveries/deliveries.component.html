@@ -1,0 +1,211 @@
+<main class="page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">
+        Logística
+      </span>
+
+      <h1>Entregas</h1>
+
+      <p>
+        Acompanhe pedidos pendentes e confirme
+        quando a mercadoria chegar ao cliente.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="filter-button"
+      [class.active]="showCompleted()"
+      (click)="toggleCompleted()"
+    >
+      {{
+        showCompleted()
+          ? 'Ocultar concluídas'
+          : 'Ver concluídas'
+      }}
+    </button>
+  </header>
+
+  @if (success()) {
+    <section class="message success">
+      {{ success() }}
+    </section>
+  }
+
+  @if (error()) {
+    <section class="message error">
+      {{ error() }}
+    </section>
+  }
+
+  <section class="summary-grid">
+    <article class="summary-card">
+      <span>Pendentes</span>
+
+      <strong>
+        {{ pendingCount() }}
+      </strong>
+
+      <small>
+        aguardando conclusão
+      </small>
+    </article>
+
+    @if (showCompleted()) {
+      <article class="summary-card">
+        <span>Entregues</span>
+
+        <strong>
+          {{ deliveredCount() }}
+        </strong>
+
+        <small>
+          concluídas
+        </small>
+      </article>
+    }
+
+    <article class="summary-card">
+      <span>Volume listado</span>
+
+      <strong>
+        {{
+          totalQuantity()
+            | number:'1.0-3':'pt-BR'
+        }}
+      </strong>
+
+      <small>
+        unidades
+      </small>
+    </article>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <span class="section-label">
+          Operação
+        </span>
+
+        <h2>
+          {{
+            showCompleted()
+              ? 'Todas as entregas'
+              : 'Entregas pendentes'
+          }}
+        </h2>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="empty-state">
+        Carregando entregas...
+      </div>
+    } @else if (
+      deliveries().length === 0
+    ) {
+      <div class="empty-state success-empty">
+        <strong>
+          Nenhuma entrega pendente.
+        </strong>
+
+        <span>
+          As operações estão em dia.
+        </span>
+      </div>
+    } @else {
+      <div class="delivery-list">
+        @for (
+          delivery of deliveries();
+          track delivery.saleId
+        ) {
+          <article class="delivery-card">
+            <div class="delivery-main">
+              <div class="customer">
+                <span class="status-badge"
+                  [class.delivered]="delivery.status === 'Entregue'"
+                >
+                  {{ delivery.status }}
+                </span>
+
+                <h3>
+                  {{ delivery.customerName }}
+                </h3>
+
+                <span class="sale-date">
+                  Venda em
+                  {{
+                    delivery.occurredAtUtc
+                      | date:'dd/MM/yyyy HH:mm'
+                  }}
+                </span>
+              </div>
+
+              <div class="delivery-data">
+                <div>
+                  <span>Método</span>
+
+                  <strong>
+                    {{ delivery.method }}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Quantidade</span>
+
+                  <strong>
+                    {{
+                      delivery.totalQuantity
+                        | number:'1.0-3':'pt-BR'
+                    }}
+                  </strong>
+                </div>
+
+                @if (
+                  delivery.deliveredAtUtc
+                ) {
+                  <div>
+                    <span>Concluída em</span>
+
+                    <strong>
+                      {{
+                        delivery.deliveredAtUtc
+                          | date:'dd/MM/yyyy HH:mm'
+                      }}
+                    </strong>
+                  </div>
+                }
+              </div>
+            </div>
+
+            @if (
+              delivery.status === 'Pendente'
+            ) {
+              <button
+                type="button"
+                class="complete-button"
+                [disabled]="
+                  completingSaleId() !== null
+                "
+                (click)="markDelivered(delivery)"
+              >
+                {{
+                  completingSaleId() ===
+                  delivery.saleId
+                    ? 'Concluindo...'
+                    : 'Marcar como entregue'
+                }}
+              </button>
+            } @else {
+              <div class="completed-label">
+                Entrega concluída ✓
+              </div>
+            }
+          </article>
+        }
+      </div>
+    }
+  </section>
+</main>

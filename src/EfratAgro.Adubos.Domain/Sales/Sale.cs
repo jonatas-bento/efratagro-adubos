@@ -10,7 +10,8 @@ public sealed class Sale
 
     public Sale(
         Guid customerId,
-        DateTime occurredAtUtc)
+        DateTime occurredAtUtc,
+        DeliveryMethod deliveryMethod = DeliveryMethod.Delivery)
     {
         if (customerId == Guid.Empty)
         {
@@ -19,9 +20,20 @@ public sealed class Sale
                 nameof(customerId));
         }
 
+        if (deliveryMethod == DeliveryMethod.Unspecified)
+        {
+            throw new ArgumentException(
+                "Delivery method is required.",
+                nameof(deliveryMethod));
+        }
+
         Id = Guid.NewGuid();
         CustomerId = customerId;
         OccurredAtUtc = occurredAtUtc;
+
+        DeliveryMethod = deliveryMethod;
+        DeliveryStatus = DeliveryStatus.Pending;
+
         CreatedAtUtc = DateTime.UtcNow;
     }
 
@@ -33,5 +45,23 @@ public sealed class Sale
 
     public DateTime OccurredAtUtc { get; private set; }
 
+    public DeliveryMethod DeliveryMethod { get; private set; }
+
+    public DeliveryStatus DeliveryStatus { get; private set; }
+
+    public DateTime? DeliveredAtUtc { get; private set; }
+
     public DateTime CreatedAtUtc { get; private set; }
+
+    public void MarkDelivered(
+        DateTime deliveredAtUtc)
+    {
+        if (DeliveryStatus == DeliveryStatus.Delivered)
+        {
+            return;
+        }
+
+        DeliveryStatus = DeliveryStatus.Delivered;
+        DeliveredAtUtc = deliveredAtUtc;
+    }
 }

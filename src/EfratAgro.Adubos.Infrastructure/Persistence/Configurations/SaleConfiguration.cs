@@ -21,6 +21,23 @@ public sealed class SaleConfiguration
             .HasColumnType("datetime(6)")
             .IsRequired();
 
+        builder.Property(x => x.DeliveryMethod)
+            .HasConversion<int>()
+            .HasDefaultValue(
+                DeliveryMethod.Unspecified)
+            .IsRequired();
+
+        builder.Property(x => x.DeliveryStatus)
+            .HasConversion<int>()
+            .HasDefaultValue(
+                DeliveryStatus.Pending)
+            .HasSentinel(
+                DeliveryStatus.Unspecified)
+            .IsRequired();
+
+        builder.Property(x => x.DeliveredAtUtc)
+            .HasColumnType("datetime(6)");
+
         builder.Property(x => x.CreatedAtUtc)
             .HasColumnType("datetime(6)")
             .IsRequired();
@@ -31,7 +48,7 @@ public sealed class SaleConfiguration
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(x => x.CustomerId);
-
         builder.HasIndex(x => x.OccurredAtUtc);
+        builder.HasIndex(x => x.DeliveryStatus);
     }
 }

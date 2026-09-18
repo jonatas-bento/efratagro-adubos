@@ -150,7 +150,8 @@ public sealed class SaleService
             var sale =
                 new Sale(
                     customer.Id,
-                    occurredAtUtc);
+                    occurredAtUtc,
+                    request.DeliveryMethod);
 
             _dbContext.Sales.Add(sale);
 
@@ -195,7 +196,9 @@ public sealed class SaleService
                 request.Items.Sum(x => x.Quantity),
                 request.Items.Sum(
                     x => x.Quantity * x.UnitPrice),
-                occurredAtUtc);
+                occurredAtUtc,
+                sale.DeliveryMethod,
+                sale.DeliveryStatus);
         }
         catch
         {

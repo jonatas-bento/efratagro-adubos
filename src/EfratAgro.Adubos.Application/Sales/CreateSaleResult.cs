@@ -1,3 +1,5 @@
+using EfratAgro.Adubos.Domain.Sales;
+
 namespace EfratAgro.Adubos.Application.Sales;
 
 public sealed record CreateSaleResult(
@@ -7,4 +9,6 @@ public sealed record CreateSaleResult(
     int Items,
     decimal TotalQuantity,
     decimal TotalValue,
-    DateTime OccurredAtUtc);
+    DateTime OccurredAtUtc,
+    DeliveryMethod DeliveryMethod,
+    DeliveryStatus DeliveryStatus);

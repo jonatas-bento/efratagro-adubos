@@ -1,4 +1,5 @@
 using EfratAgro.Adubos.Application.Catalog;
+using EfratAgro.Adubos.Application.Deliveries;
 using EfratAgro.Adubos.Application.Inventory;
 using EfratAgro.Adubos.Application.Purchases;
 using EfratAgro.Adubos.Application.Sales;
@@ -141,6 +142,49 @@ app.MapPost(
         }
     })
     .WithTags("Purchases");
+
+app.MapGet(
+    "/api/deliveries",
+    async (
+        bool? pendingOnly,
+        int? take,
+        IDeliveryQueryService deliveries,
+        CancellationToken cancellationToken) =>
+        Results.Ok(
+            await deliveries.GetAsync(
+                pendingOnly ?? true,
+                take ?? 100,
+                cancellationToken)))
+    .WithTags("Deliveries");
+
+app.MapPatch(
+    "/api/deliveries/{saleId:guid}/complete",
+    async (
+        Guid saleId,
+        IDeliveryService deliveries,
+        CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            await deliveries.MarkDeliveredAsync(
+                saleId,
+                cancellationToken);
+
+            return Results.NoContent();
+        }
+        catch (Exception ex)
+            when (
+                ex is ArgumentException or
+                InvalidOperationException)
+        {
+            return Results.BadRequest(
+                new
+                {
+                    error = ex.Message
+                });
+        }
+    })
+    .WithTags("Deliveries");
 
 app.Run();
 

@@ -3,6 +3,9 @@ import {
 } from '@angular/router';
 
 import {
+  DeliveriesComponent,
+} from './features/deliveries/deliveries.component';
+import {
   InventoryComponent,
 } from './features/inventory/inventory.component';
 import {
@@ -27,6 +30,11 @@ export const routes: Routes = [
     path: 'compras',
     component: PurchasesComponent,
     title: 'Compras | EfratAgro',
+  },
+  {
+    path: 'entregas',
+    component: DeliveriesComponent,
+    title: 'Entregas | EfratAgro',
   },
   {
     path: '',
