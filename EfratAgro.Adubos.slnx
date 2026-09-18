@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/EfratAgro.Adubos.Api/EfratAgro.Adubos.Api.csproj" />
+    <Project Path="src/EfratAgro.Adubos.Application/EfratAgro.Adubos.Application.csproj" />
+    <Project Path="src/EfratAgro.Adubos.Domain/EfratAgro.Adubos.Domain.csproj" />
+    <Project Path="src/EfratAgro.Adubos.Infrastructure/EfratAgro.Adubos.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/EfratAgro.Adubos.Api.Tests/EfratAgro.Adubos.Api.Tests.csproj" />
+    <Project Path="tests/EfratAgro.Adubos.Domain.Tests/EfratAgro.Adubos.Domain.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/EfratAgro.Adubos.LegacyImporter/EfratAgro.Adubos.LegacyImporter.csproj" />
+  </Folder>
+</Solution>

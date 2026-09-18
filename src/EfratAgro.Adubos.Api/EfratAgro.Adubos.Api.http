@@ -1,0 +1,6 @@
+@EfratAgro.Adubos.Api_HostAddress = http://localhost:5242
+
+GET {{EfratAgro.Adubos.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

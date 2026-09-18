@@ -1,0 +1,35 @@
+# .NET
+bin/
+obj/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# macOS
+.DS_Store
+
+# Local environment / secrets
+.env
+.env.*
+!.env.example
+
+# Test results
+TestResults/
+coverage/
+coverage.*
+
+# Logs
+*.log
+
+# Local database/data
+data/
+backups/
+
+# Angular / Node - frontend future
+node_modules/
+dist/
+.angular/
