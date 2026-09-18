@@ -2,16 +2,24 @@ import {
   ChangeDetectionStrategy,
   Component,
 } from '@angular/core';
+import {
+  RouterOutlet,
+} from '@angular/router';
 
 import {
-  InventoryComponent,
-} from './features/inventory/inventory.component';
+  AppFooterComponent,
+} from './shared/footer/app-footer.component';
+import {
+  AppNavigationComponent,
+} from './shared/navigation/app-navigation.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [
-    InventoryComponent,
+    RouterOutlet,
+    AppNavigationComponent,
+    AppFooterComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
