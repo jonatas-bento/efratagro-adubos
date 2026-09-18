@@ -2,6 +2,7 @@ using EfratAgro.Adubos.Domain.Catalog;
 using EfratAgro.Adubos.Domain.Customers;
 using EfratAgro.Adubos.Domain.Inventory;
 using EfratAgro.Adubos.Domain.Legacy;
+using EfratAgro.Adubos.Domain.Purchases;
 using EfratAgro.Adubos.Domain.Sales;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,14 +17,11 @@ public sealed class AdubosDbContext
     {
     }
 
-    public DbSet<Supplier> Suppliers =>
-        Set<Supplier>();
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
 
-    public DbSet<Product> Products =>
-        Set<Product>();
+    public DbSet<Product> Products => Set<Product>();
 
-    public DbSet<Warehouse> Warehouses =>
-        Set<Warehouse>();
+    public DbSet<Warehouse> Warehouses => Set<Warehouse>();
 
     public DbSet<InventoryMovement> InventoryMovements =>
         Set<InventoryMovement>();
@@ -34,14 +32,16 @@ public sealed class AdubosDbContext
     public DbSet<LegacyImportRow> LegacyImportRows =>
         Set<LegacyImportRow>();
 
-    public DbSet<Customer> Customers =>
-        Set<Customer>();
+    public DbSet<Customer> Customers => Set<Customer>();
 
-    public DbSet<Sale> Sales =>
-        Set<Sale>();
+    public DbSet<Sale> Sales => Set<Sale>();
 
-    public DbSet<SaleItem> SaleItems =>
-        Set<SaleItem>();
+    public DbSet<SaleItem> SaleItems => Set<SaleItem>();
+
+    public DbSet<Purchase> Purchases => Set<Purchase>();
+
+    public DbSet<PurchaseItem> PurchaseItems =>
+        Set<PurchaseItem>();
 
     protected override void OnModelCreating(
         ModelBuilder modelBuilder)

@@ -1,0 +1,281 @@
+:host {
+  display: block;
+}
+
+.page {
+  width: min(100% - 2rem, 1180px);
+  margin: 0 auto;
+  padding: 3rem 0 5rem;
+}
+
+.page-header {
+  margin-bottom: 1.75rem;
+}
+
+.eyebrow,
+.section-label {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: #54805d;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+h1,
+h2 {
+  margin: 0;
+  color: #17281b;
+}
+
+h1 {
+  font-size: clamp(2rem, 6vw, 3rem);
+  letter-spacing: -0.04em;
+}
+
+h2 {
+  font-size: 1.1rem;
+}
+
+.page-header p {
+  margin: 0.7rem 0 0;
+  color: #68766b;
+}
+
+.sales-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.panel {
+  padding: 1.25rem;
+  border: 1px solid #dde6df;
+  border-radius: 1rem;
+  background: #ffffff;
+  box-shadow: 0 5px 20px rgb(35 68 43 / 0.04);
+}
+
+.panel-header,
+.items-heading,
+.form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.panel-header {
+  margin-bottom: 1.25rem;
+}
+
+.customer-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+label > span,
+.item-total > span,
+.sale-total > span {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: #48584d;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #ccd8ce;
+  border-radius: 0.75rem;
+  outline: none;
+  background: #ffffff;
+  color: #1d2d21;
+}
+
+input:focus,
+select:focus {
+  border-color: #4d8057;
+  box-shadow: 0 0 0 3px rgb(77 128 87 / 0.12);
+}
+
+.items {
+  margin-top: 1.75rem;
+}
+
+.items-heading {
+  margin-bottom: 0.9rem;
+}
+
+.sale-item {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #e0e8e1;
+  border-radius: 0.9rem;
+  background: #f9fbf9;
+}
+
+.product-field small {
+  display: block;
+  margin-top: 0.4rem;
+  color: #748078;
+  font-size: 0.72rem;
+}
+
+.item-total {
+  align-self: end;
+}
+
+.item-total strong {
+  color: #245f34;
+  font-size: 1rem;
+}
+
+.primary-button,
+.secondary-button,
+.remove-button {
+  border: 0;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.primary-button {
+  min-height: 3rem;
+  padding: 0 1.3rem;
+  background: #245f34;
+  color: white;
+}
+
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.secondary-button {
+  padding: 0.7rem 0.9rem;
+  background: #e8f1e9;
+  color: #285d35;
+}
+
+.remove-button {
+  align-self: end;
+  min-height: 2.7rem;
+  padding: 0 0.8rem;
+  background: #f5eaea;
+  color: #944949;
+}
+
+.form-footer {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e4ebe5;
+}
+
+.sale-total strong {
+  display: block;
+  color: #1d542c;
+  font-size: 1.45rem;
+}
+
+.message {
+  margin-bottom: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.8rem;
+}
+
+.message.success {
+  background: #e7f3e9;
+  color: #245f34;
+}
+
+.message.error {
+  background: #f7eaea;
+  color: #963f3f;
+}
+
+.recent-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.recent-sale {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #edf1ed;
+}
+
+.recent-sale:last-child {
+  border-bottom: 0;
+}
+
+.recent-sale strong,
+.recent-sale span {
+  display: block;
+}
+
+.recent-sale > div:first-child strong {
+  color: #24382a;
+}
+
+.recent-sale span {
+  margin-top: 0.2rem;
+  color: #849087;
+  font-size: 0.72rem;
+}
+
+.recent-value {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.recent-value strong {
+  color: #276337;
+}
+
+.empty-state {
+  padding: 2rem 0;
+  color: #7b887e;
+  text-align: center;
+}
+
+@media (min-width: 700px) {
+  .customer-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+
+  .sale-item {
+    grid-template-columns:
+      minmax(0, 2fr)
+      minmax(7rem, 0.65fr)
+      minmax(8rem, 0.75fr)
+      auto;
+    align-items: end;
+  }
+
+  .remove-button {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+}
+
+@media (min-width: 1000px) {
+  .sales-layout {
+    grid-template-columns:
+      minmax(0, 1.65fr)
+      minmax(19rem, 0.75fr);
+    align-items: start;
+  }
+
+  .recent-panel {
+    position: sticky;
+    top: 6rem;
+  }
+}

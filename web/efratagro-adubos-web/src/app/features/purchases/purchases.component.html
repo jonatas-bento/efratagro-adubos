@@ -1,0 +1,271 @@
+<main class="page">
+  <header class="page-header">
+    <span class="eyebrow">
+      Operações
+    </span>
+
+    <h1>Compras</h1>
+
+    <p>
+      Registre entradas de mercadoria e atualize
+      o estoque automaticamente.
+    </p>
+  </header>
+
+  @if (success()) {
+    <section class="message success">
+      Compra registrada com sucesso.
+
+      <strong>
+        {{
+          success()!.totalValue
+            | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+        }}
+      </strong>
+    </section>
+  }
+
+  @if (error()) {
+    <section class="message error">
+      {{ error() }}
+    </section>
+  }
+
+  <div class="sales-layout">
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <span class="section-label">
+            Nova compra
+          </span>
+
+          <h2>Dados da compra</h2>
+        </div>
+      </div>
+
+      <form
+        [formGroup]="form"
+        (ngSubmit)="submit()"
+      >
+        <div class="customer-grid">
+          <label>
+            <span>Fornecedor</span>
+
+            <select
+              formControlName="supplierId"
+              (change)="supplierChanged()"
+            >
+              <option value="">
+                Selecione...
+              </option>
+
+              @for (
+                supplier of suppliers();
+                track supplier.id
+              ) {
+                <option
+                  [value]="supplier.id"
+                >
+                  {{ supplier.name }}
+                </option>
+              }
+            </select>
+          </label>
+        </div>
+
+        <div
+          class="items"
+          formArrayName="items"
+        >
+          <div class="items-heading">
+            <div>
+              <span class="section-label">
+                Produtos
+              </span>
+
+              <h2>Itens da compra</h2>
+            </div>
+
+            <button
+              type="button"
+              class="secondary-button"
+              (click)="addItem()"
+            >
+              + Adicionar produto
+            </button>
+          </div>
+
+          @for (
+            item of items.controls;
+            track item;
+            let index = $index
+          ) {
+            <article
+              class="sale-item"
+              [formGroupName]="index"
+            >
+              <label class="product-field">
+                <span>Produto</span>
+
+                <select
+                  formControlName="productId"
+                >
+                  <option value="">
+                    Selecione...
+                  </option>
+
+                  @for (
+                    product of productsForSupplier();
+                    track product.productId
+                  ) {
+                    <option
+                      [value]="product.productId"
+                    >
+                      {{ product.productName }}
+                      · saldo atual
+                      {{
+                        product.quantity
+                          | number:'1.0-3':'pt-BR'
+                      }}
+                    </option>
+                  }
+                </select>
+              </label>
+
+              <label>
+                <span>Quantidade</span>
+
+                <input
+                  type="number"
+                  formControlName="quantity"
+                  min="0.001"
+                  step="0.001"
+                />
+              </label>
+
+              <label>
+                <span>Custo unitário</span>
+
+                <input
+                  type="number"
+                  formControlName="unitCost"
+                  min="0"
+                  step="0.01"
+                />
+              </label>
+
+              <div class="item-total">
+                <span>Total</span>
+
+                <strong>
+                  {{
+                    itemTotal(index)
+                      | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+                  }}
+                </strong>
+              </div>
+
+              @if (items.length > 1) {
+                <button
+                  type="button"
+                  class="remove-button"
+                  (click)="removeItem(index)"
+                >
+                  Remover
+                </button>
+              }
+            </article>
+          }
+        </div>
+
+        <footer class="form-footer">
+          <div class="sale-total">
+            <span>Total da compra</span>
+
+            <strong>
+              {{
+                purchaseTotal()
+                  | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+              }}
+            </strong>
+          </div>
+
+          <button
+            type="submit"
+            class="primary-button"
+            [disabled]="saving()"
+          >
+            {{
+              saving()
+                ? 'Registrando...'
+                : 'Registrar compra'
+            }}
+          </button>
+        </footer>
+      </form>
+    </section>
+
+    <aside class="panel recent-panel">
+      <div class="panel-header">
+        <div>
+          <span class="section-label">
+            Histórico
+          </span>
+
+          <h2>Compras recentes</h2>
+        </div>
+      </div>
+
+      @if (loading()) {
+        <div class="empty-state">
+          Carregando...
+        </div>
+      } @else if (
+        recentPurchases().length === 0
+      ) {
+        <div class="empty-state">
+          Nenhuma compra registrada.
+        </div>
+      } @else {
+        <div class="recent-list">
+          @for (
+            purchase of recentPurchases();
+            track purchase.purchaseId
+          ) {
+            <article class="recent-sale">
+              <div>
+                <strong>
+                  {{ purchase.supplierName }}
+                </strong>
+
+                <span>
+                  {{
+                    purchase.occurredAtUtc
+                      | date:'dd/MM/yyyy HH:mm'
+                  }}
+                </span>
+              </div>
+
+              <div class="recent-value">
+                <strong>
+                  {{
+                    purchase.totalValue
+                      | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+                  }}
+                </strong>
+
+                <span>
+                  {{
+                    purchase.totalQuantity
+                      | number:'1.0-3':'pt-BR'
+                  }}
+                  unidades
+                </span>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </aside>
+  </div>
+</main>

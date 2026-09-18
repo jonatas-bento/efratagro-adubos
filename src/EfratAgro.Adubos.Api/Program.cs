@@ -1,4 +1,6 @@
+using EfratAgro.Adubos.Application.Catalog;
 using EfratAgro.Adubos.Application.Inventory;
+using EfratAgro.Adubos.Application.Purchases;
 using EfratAgro.Adubos.Application.Sales;
 using EfratAgro.Adubos.Infrastructure;
 
@@ -36,16 +38,21 @@ app.MapGet(
         string? q,
         IInventoryQueryService inventory,
         CancellationToken cancellationToken) =>
-    {
-        var result =
+        Results.Ok(
             await inventory.GetInventoryAsync(
                 q,
-                cancellationToken);
-
-        return Results.Ok(result);
-    })
-    .WithName("GetInventory")
+                cancellationToken)))
     .WithTags("Inventory");
+
+app.MapGet(
+    "/api/suppliers",
+    async (
+        ISupplierQueryService suppliers,
+        CancellationToken cancellationToken) =>
+        Results.Ok(
+            await suppliers.GetAllAsync(
+                cancellationToken)))
+    .WithTags("Catalog");
 
 app.MapGet(
     "/api/sales",
@@ -53,15 +60,10 @@ app.MapGet(
         int? take,
         ISalesQueryService sales,
         CancellationToken cancellationToken) =>
-    {
-        var result =
+        Results.Ok(
             await sales.GetRecentAsync(
                 take ?? 20,
-                cancellationToken);
-
-        return Results.Ok(result);
-    })
-    .WithName("GetRecentSales")
+                cancellationToken)))
     .WithTags("Sales");
 
 app.MapPost(
@@ -82,15 +84,10 @@ app.MapPost(
                 $"/api/sales/{result.SaleId}",
                 result);
         }
-        catch (ArgumentException ex)
-        {
-            return Results.BadRequest(
-                new
-                {
-                    error = ex.Message
-                });
-        }
-        catch (InvalidOperationException ex)
+        catch (Exception ex)
+            when (
+                ex is ArgumentException or
+                InvalidOperationException)
         {
             return Results.BadRequest(
                 new
@@ -99,8 +96,51 @@ app.MapPost(
                 });
         }
     })
-    .WithName("CreateSale")
     .WithTags("Sales");
+
+app.MapGet(
+    "/api/purchases",
+    async (
+        int? take,
+        IPurchasesQueryService purchases,
+        CancellationToken cancellationToken) =>
+        Results.Ok(
+            await purchases.GetRecentAsync(
+                take ?? 20,
+                cancellationToken)))
+    .WithTags("Purchases");
+
+app.MapPost(
+    "/api/purchases",
+    async (
+        CreatePurchaseRequest request,
+        IPurchaseService purchases,
+        CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var result =
+                await purchases.CreateAsync(
+                    request,
+                    cancellationToken);
+
+            return Results.Created(
+                $"/api/purchases/{result.PurchaseId}",
+                result);
+        }
+        catch (Exception ex)
+            when (
+                ex is ArgumentException or
+                InvalidOperationException)
+        {
+            return Results.BadRequest(
+                new
+                {
+                    error = ex.Message
+                });
+        }
+    })
+    .WithTags("Purchases");
 
 app.Run();
 
