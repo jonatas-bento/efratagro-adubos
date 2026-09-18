@@ -288,3 +288,68 @@ select:focus {
       minmax(13rem, 1.15fr);
   }
 }
+
+.financial-section {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--brand-border);
+  border-radius: var(--radius-md);
+  background: var(--brand-surface-soft);
+}
+
+.financial-heading {
+  margin-bottom: .9rem;
+}
+
+.financial-fields {
+  display: grid;
+  gap: .8rem;
+}
+
+.installment-preview {
+  display: grid;
+  gap: .55rem;
+  margin-top: 1rem;
+}
+
+.installment-preview > div {
+  padding: .75rem;
+  border: 1px solid var(--brand-border);
+  border-radius: .7rem;
+  background: white;
+}
+
+.installment-preview span,
+.installment-preview strong,
+.installment-preview small {
+  display: block;
+}
+
+.installment-preview span,
+.installment-preview small {
+  color: var(--brand-muted);
+  font-size: .72rem;
+}
+
+.installment-preview strong {
+  margin: .15rem 0;
+  color: var(--brand-primary-dark);
+}
+
+@media (min-width: 800px) {
+  .customer-grid {
+    grid-template-columns:
+      minmax(0, 2fr)
+      minmax(13rem, 1fr);
+  }
+
+  .financial-fields {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+  }
+
+  .installment-preview {
+    grid-template-columns:
+      repeat(auto-fit, minmax(9rem, 1fr));
+  }
+}

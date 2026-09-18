@@ -10,11 +10,17 @@ export interface CreateSaleItemRequest {
   unitPrice: number;
 }
 
+export interface CreateSaleReceivableRequest {
+  installmentNumber: number;
+  dueDate: string;
+  amount: number;
+}
+
 export interface CreateSaleRequest {
-  customerName: string;
-  customerPhone: string | null;
+  customerId: string;
   deliveryMethod: DeliveryMethod;
   items: CreateSaleItemRequest[];
+  receivables: CreateSaleReceivableRequest[];
 }
 
 export interface CreateSaleResult {
@@ -27,6 +33,8 @@ export interface CreateSaleResult {
   occurredAtUtc: string;
   deliveryMethod: DeliveryMethod;
   deliveryStatus: number;
+  receivables: number;
+  scheduledAmount: number;
 }
 
 export interface SaleSummary {
@@ -36,4 +44,14 @@ export interface SaleSummary {
   totalQuantity: number;
   totalValue: number;
   occurredAtUtc: string;
+}
+
+export type PaymentCondition =
+  | 'cash'
+  | 'installments';
+
+export interface FinancialInstallmentPreview {
+  installmentNumber: number;
+  dueDate: string;
+  amount: number;
 }

@@ -51,23 +51,27 @@
           <label>
             <span>Cliente</span>
 
-            <input
-              type="text"
-              formControlName="customerName"
-              placeholder="Nome do cliente"
-              autocomplete="off"
+            <select
+              formControlName="customerId"
             >
-          </label>
+              <option value="">
+                Selecione um cliente...
+              </option>
 
-          <label>
-            <span>Telefone</span>
-
-            <input
-              type="tel"
-              formControlName="customerPhone"
-              placeholder="Opcional"
-              autocomplete="off"
-            >
+              @for (
+                customer of customers();
+                track customer.id
+              ) {
+                <option
+                  [value]="customer.id"
+                >
+                  {{ customer.name }}
+                  @if (customer.phone) {
+                    · {{ customer.phone }}
+                  }
+                </option>
+              }
+            </select>
           </label>
 
           <label>
@@ -96,6 +100,99 @@
             </select>
           </label>
         </div>
+
+        <section class="financial-section">
+          <div class="financial-heading">
+            <div>
+              <span class="section-label">
+                Financeiro
+              </span>
+
+              <h2>
+                Programação do recebimento
+              </h2>
+            </div>
+          </div>
+
+          <div class="financial-fields">
+            <label>
+              <span>Condição</span>
+
+              <select
+                formControlName="paymentCondition"
+              >
+                <option value="cash">
+                  À vista
+                </option>
+
+                <option value="installments">
+                  Parcelado
+                </option>
+              </select>
+            </label>
+
+            @if (isInstallmentSale()) {
+              <label>
+                <span>Número de parcelas</span>
+
+                <input
+                  type="number"
+                  formControlName="installmentCount"
+                  min="2"
+                  max="24"
+                  step="1"
+                />
+              </label>
+            }
+
+            <label>
+              <span>
+                {{
+                  isInstallmentSale()
+                    ? 'Primeiro vencimento'
+                    : 'Vencimento'
+                }}
+              </span>
+
+              <input
+                type="date"
+                formControlName="firstDueDate"
+              />
+            </label>
+          </div>
+
+          @if (
+            financialSchedule().length > 0
+          ) {
+            <div class="installment-preview">
+              @for (
+                installment of financialSchedule();
+                track installment.installmentNumber
+              ) {
+                <div>
+                  <span>
+                    Parcela
+                    {{ installment.installmentNumber }}
+                  </span>
+
+                  <strong>
+                    {{
+                      installment.amount
+                        | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+                    }}
+                  </strong>
+
+                  <small>
+                    {{
+                      installment.dueDate
+                        | date:'dd/MM/yyyy'
+                    }}
+                  </small>
+                </div>
+              }
+            </div>
+          }
+        </section>
 
         <div
           class="items"

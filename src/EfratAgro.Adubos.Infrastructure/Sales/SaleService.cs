@@ -1,5 +1,5 @@
 using EfratAgro.Adubos.Application.Sales;
-using EfratAgro.Adubos.Domain.Customers;
+using EfratAgro.Adubos.Domain.Finance;
 using EfratAgro.Adubos.Domain.Inventory;
 using EfratAgro.Adubos.Domain.Sales;
 using EfratAgro.Adubos.Infrastructure.Persistence;
@@ -22,7 +22,7 @@ public sealed class SaleService
         CreateSaleRequest request,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.CustomerName))
+        if (request.CustomerId == Guid.Empty)
         {
             throw new ArgumentException(
                 "Informe o cliente.");
@@ -33,6 +33,13 @@ public sealed class SaleService
         {
             throw new ArgumentException(
                 "A venda precisa possuir ao menos um item.");
+        }
+
+        if (request.Receivables is null ||
+            request.Receivables.Count == 0)
+        {
+            throw new ArgumentException(
+                "Informe a programação financeira da venda.");
         }
 
         if (request.Items.Any(x => x.ProductId == Guid.Empty))
@@ -61,87 +68,129 @@ public sealed class SaleService
                 "O mesmo produto não pode aparecer duas vezes na venda.");
         }
 
+        if (request.Receivables
+            .GroupBy(x => x.InstallmentNumber)
+            .Any(x => x.Count() > 1))
+        {
+            throw new ArgumentException(
+                "Existem parcelas duplicadas.");
+        }
+
+        if (request.Receivables.Any(
+                x =>
+                    x.InstallmentNumber <= 0 ||
+                    x.Amount <= 0))
+        {
+            throw new ArgumentException(
+                "A programação financeira contém uma parcela inválida.");
+        }
+
+        var totalValue =
+            request.Items.Sum(
+                x =>
+                    x.Quantity *
+                    x.UnitPrice);
+
+        if (totalValue <= 0)
+        {
+            throw new ArgumentException(
+                "O valor total da venda precisa ser maior que zero.");
+        }
+
+        var scheduledAmount =
+            request.Receivables.Sum(
+                x => x.Amount);
+
+        if (Math.Abs(
+                totalValue -
+                scheduledAmount) > 0.01m)
+        {
+            throw new ArgumentException(
+                $"A programação financeira ({scheduledAmount:C}) " +
+                $"não corresponde ao total da venda ({totalValue:C}).");
+        }
+
         await using var transaction =
             await _dbContext.Database
-                .BeginTransactionAsync(cancellationToken);
+                .BeginTransactionAsync(
+                    cancellationToken);
 
         try
         {
-            var normalizedCustomer =
-                request.CustomerName
-                    .Trim()
-                    .ToUpperInvariant();
-
             var customer =
                 await _dbContext.Customers
-                    .FirstOrDefaultAsync(
-                        x => x.NormalizedName == normalizedCustomer,
-                        cancellationToken);
-
-            if (customer is null)
-            {
-                customer =
-                    new Customer(
-                        request.CustomerName,
-                        request.CustomerPhone);
-
-                _dbContext.Customers.Add(customer);
-            }
+                    .SingleOrDefaultAsync(
+                        x =>
+                            x.Id == request.CustomerId &&
+                            x.IsActive,
+                        cancellationToken)
+                ?? throw new InvalidOperationException(
+                    "Cliente não encontrado.");
 
             var products =
                 await _dbContext.Products
                     .AsNoTracking()
                     .Where(x => x.IsActive)
-                    .ToListAsync(cancellationToken);
+                    .ToListAsync(
+                        cancellationToken);
 
             var productsById =
                 products.ToDictionary(
                     x => x.Id);
 
-            var stockRows =
+            foreach (var item in request.Items)
+            {
+                if (!productsById.ContainsKey(
+                        item.ProductId))
+                {
+                    throw new InvalidOperationException(
+                        "Produto não encontrado.");
+                }
+            }
+
+            var balances =
                 await _dbContext.InventoryMovements
                     .AsNoTracking()
-                    .GroupBy(x => x.ProductId)
-                    .Select(group => new
-                    {
-                        ProductId = group.Key,
-                        Quantity = group.Sum(x => x.Quantity)
-                    })
-                    .ToListAsync(cancellationToken);
+                    .GroupBy(
+                        x => x.ProductId)
+                    .Select(group =>
+                        new
+                        {
+                            ProductId = group.Key,
+                            Quantity =
+                                group.Sum(
+                                    x => x.Quantity)
+                        })
+                    .ToListAsync(
+                        cancellationToken);
 
             var stockByProduct =
-                stockRows.ToDictionary(
+                balances.ToDictionary(
                     x => x.ProductId,
                     x => x.Quantity);
 
-            foreach (var requestedItem in request.Items)
+            foreach (var item in request.Items)
             {
-                if (!productsById.TryGetValue(
-                        requestedItem.ProductId,
-                        out var product))
-                {
-                    throw new InvalidOperationException(
-                        $"Produto {requestedItem.ProductId} não encontrado.");
-                }
-
                 var available =
-                    stockByProduct.GetValueOrDefault(
-                        product.Id,
-                        0m);
+                    stockByProduct
+                        .GetValueOrDefault(
+                            item.ProductId);
 
-                if (requestedItem.Quantity > available)
+                if (available < item.Quantity)
                 {
                     throw new InvalidOperationException(
-                        $"Estoque insuficiente para '{product.Name}'. " +
-                        $"Disponível: {available:N3}. " +
-                        $"Solicitado: {requestedItem.Quantity:N3}.");
+                        $"Estoque insuficiente para " +
+                        $"'{productsById[item.ProductId].Name}'. " +
+                        $"Disponível: {available}.");
                 }
             }
 
             var warehouse =
                 await _dbContext.Warehouses
                     .SingleAsync(
-                        x => x.Name == "Armazém Principal",
+                        x =>
+                            x.Name ==
+                            "Armazém Principal",
                         cancellationToken);
 
             var occurredAtUtc =
@@ -151,9 +200,11 @@ public sealed class SaleService
                 new Sale(
                     customer.Id,
                     occurredAtUtc,
-                    request.DeliveryMethod);
+                    request.DeliveryMethod,
+                    SaleOrigin.Operational);
 
-            _dbContext.Sales.Add(sale);
+            _dbContext.Sales.Add(
+                sale);
 
             foreach (var requestedItem in request.Items)
             {
@@ -164,22 +215,42 @@ public sealed class SaleService
                         requestedItem.Quantity,
                         requestedItem.UnitPrice);
 
-                _dbContext.SaleItems.Add(saleItem);
+                _dbContext.SaleItems.Add(
+                    saleItem);
 
                 var movement =
                     new InventoryMovement(
                         requestedItem.ProductId,
                         warehouse.Id,
                         InventoryMovementType.Sale,
-                        StockBucket.UnclassifiedLegacy,
+                        StockBucket.Normal,
                         -requestedItem.Quantity,
                         occurredAtUtc,
                         referenceType: "SALE",
                         referenceId: sale.Id,
-                        notes: "Saída de estoque por venda.");
+                        notes:
+                            "Saída de estoque por venda.");
 
                 _dbContext.InventoryMovements.Add(
                     movement);
+            }
+
+            foreach (
+                var requestedReceivable
+                in request.Receivables
+                    .OrderBy(
+                        x =>
+                            x.InstallmentNumber))
+            {
+                var receivable =
+                    new Receivable(
+                        sale.Id,
+                        requestedReceivable.InstallmentNumber,
+                        requestedReceivable.DueDate,
+                        requestedReceivable.Amount);
+
+                _dbContext.Receivables.Add(
+                    receivable);
             }
 
             await _dbContext.SaveChangesAsync(
@@ -193,12 +264,14 @@ public sealed class SaleService
                 customer.Id,
                 customer.Name,
                 request.Items.Count,
-                request.Items.Sum(x => x.Quantity),
                 request.Items.Sum(
-                    x => x.Quantity * x.UnitPrice),
+                    x => x.Quantity),
+                totalValue,
                 occurredAtUtc,
                 sale.DeliveryMethod,
-                sale.DeliveryStatus);
+                sale.DeliveryStatus,
+                request.Receivables.Count,
+                scheduledAmount);
         }
         catch
         {

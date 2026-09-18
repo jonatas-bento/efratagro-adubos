@@ -3,12 +3,17 @@ using EfratAgro.Adubos.Domain.Sales;
 namespace EfratAgro.Adubos.Application.Sales;
 
 public sealed record CreateSaleRequest(
-    string CustomerName,
-    string? CustomerPhone,
+    Guid CustomerId,
     IReadOnlyList<CreateSaleItemRequest> Items,
-    DeliveryMethod DeliveryMethod = DeliveryMethod.Delivery);
+    DeliveryMethod DeliveryMethod,
+    IReadOnlyList<CreateSaleReceivableRequest> Receivables);
 
 public sealed record CreateSaleItemRequest(
     Guid ProductId,
     decimal Quantity,
     decimal UnitPrice);
+
+public sealed record CreateSaleReceivableRequest(
+    int InstallmentNumber,
+    DateTime DueDate,
+    decimal Amount);

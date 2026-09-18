@@ -23,7 +23,7 @@ public sealed class CustomerQueryService
             CancellationToken cancellationToken = default)
     {
         var limit =
-            Math.Clamp(take, 1, 200);
+            Math.Clamp(take, 1, 1000);
 
         var query =
             _dbContext.Customers

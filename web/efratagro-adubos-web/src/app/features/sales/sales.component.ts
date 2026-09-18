@@ -21,6 +21,12 @@ import {
 } from 'rxjs';
 
 import {
+  CustomerListItem,
+} from '../customers/customer-models';
+import {
+  CustomersService,
+} from '../customers/customers.service';
+import {
   InventoryItem,
 } from '../inventory/inventory-item';
 import {
@@ -30,6 +36,8 @@ import {
   CreateSaleRequest,
   CreateSaleResult,
   DeliveryMethod,
+  FinancialInstallmentPreview,
+  PaymentCondition,
   SaleSummary,
 } from './sale-models';
 import {
@@ -48,7 +56,6 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SalesComponent {
-  readonly deliveryMethods = DeliveryMethod;
   private readonly fb =
     inject(FormBuilder).nonNullable;
 
@@ -58,17 +65,23 @@ export class SalesComponent {
   private readonly salesService =
     inject(SalesService);
 
+  private readonly customersService =
+    inject(CustomersService);
+
+  readonly deliveryMethods =
+    DeliveryMethod;
+
   readonly inventory =
     signal<InventoryItem[]>([]);
+
+  readonly customers =
+    signal<CustomerListItem[]>([]);
 
   readonly recentSales =
     signal<SaleSummary[]>([]);
 
-  readonly loading =
-    signal(true);
-
-  readonly saving =
-    signal(false);
+  readonly loading = signal(true);
+  readonly saving = signal(false);
 
   readonly error =
     signal<string | null>(null);
@@ -79,23 +92,48 @@ export class SalesComponent {
   readonly availableProducts =
     computed(() =>
       this.inventory()
-        .filter(item => item.quantity > 0),
+        .filter(
+          item =>
+            item.quantity > 0,
+        ),
     );
 
   readonly form =
     this.fb.group({
-      customerName: [
+      customerId: [
         '',
-        [
-          Validators.required,
-          Validators.maxLength(180),
-        ],
+        Validators.required,
       ],
-      customerPhone: [''],
+
       deliveryMethod: [
         DeliveryMethod.Delivery,
         Validators.required,
       ],
+
+      paymentCondition:
+        this.fb.control<PaymentCondition>(
+          'cash',
+          {
+            validators: [
+              Validators.required,
+            ],
+          },
+        ),
+
+      installmentCount: [
+        2,
+        [
+          Validators.required,
+          Validators.min(2),
+          Validators.max(24),
+        ],
+      ],
+
+      firstDueDate: [
+        this.todayString(),
+        Validators.required,
+      ],
+
       items: this.fb.array([
         this.createItemGroup(),
       ]),
@@ -107,6 +145,15 @@ export class SalesComponent {
 
   get items() {
     return this.form.controls.items;
+  }
+
+  isInstallmentSale(): boolean {
+    return (
+      this.form.controls
+        .paymentCondition
+        .value ===
+      'installments'
+    );
   }
 
   addItem(): void {
@@ -132,7 +179,8 @@ export class SalesComponent {
       this.inventory()
         .find(
           item =>
-            item.productId === productId,
+            item.productId ===
+            productId,
         )
         ?.quantity ?? 0
     );
@@ -142,7 +190,8 @@ export class SalesComponent {
     index: number,
   ): number {
     const item =
-      this.items.at(index)
+      this.items
+        .at(index)
         .getRawValue();
 
     return (
@@ -154,8 +203,84 @@ export class SalesComponent {
   saleTotal(): number {
     return this.items.controls.reduce(
       (total, _, index) =>
-        total + this.itemTotal(index),
+        total +
+        this.itemTotal(index),
       0,
+    );
+  }
+
+  financialSchedule():
+      FinancialInstallmentPreview[] {
+    const total =
+      this.saleTotal();
+
+    if (total <= 0) {
+      return [];
+    }
+
+    const condition =
+      this.form.controls
+        .paymentCondition.value;
+
+    const count =
+      condition === 'cash'
+        ? 1
+        : Math.max(
+            2,
+            Number(
+              this.form.controls
+                .installmentCount.value,
+            ),
+          );
+
+    const firstDueDateValue =
+      this.form.controls
+        .firstDueDate.value;
+
+    if (!firstDueDateValue) {
+      return [];
+    }
+
+    const firstDueDate =
+      this.parseDateOnly(
+        firstDueDateValue,
+      );
+
+    const totalCents =
+      Math.round(total * 100);
+
+    const baseCents =
+      Math.floor(
+        totalCents / count,
+      );
+
+    const remainder =
+      totalCents -
+      baseCents * count;
+
+    return Array.from(
+      { length: count },
+      (_, index) => {
+        const amountCents =
+          baseCents +
+          (index < remainder ? 1 : 0);
+
+        return {
+          installmentNumber:
+            index + 1,
+
+          dueDate:
+            this.formatDateOnly(
+              this.addMonths(
+                firstDueDate,
+                index,
+              ),
+            ),
+
+          amount:
+            amountCents / 100,
+        };
+      },
     );
   }
 
@@ -171,16 +296,25 @@ export class SalesComponent {
     const raw =
       this.form.getRawValue();
 
-    const request: CreateSaleRequest = {
-      customerName:
-        raw.customerName.trim(),
+    const schedule =
+      this.financialSchedule();
 
-      customerPhone:
-        raw.customerPhone.trim() ||
-        null,
+    if (schedule.length === 0) {
+      this.error.set(
+        'Informe a programação financeira.',
+      );
+
+      return;
+    }
+
+    const request: CreateSaleRequest = {
+      customerId:
+        raw.customerId,
 
       deliveryMethod:
-        Number(raw.deliveryMethod) as DeliveryMethod,
+        Number(
+          raw.deliveryMethod,
+        ) as DeliveryMethod,
 
       items:
         raw.items.map(
@@ -195,6 +329,20 @@ export class SalesComponent {
               Number(item.unitPrice),
           }),
         ),
+
+      receivables:
+        schedule.map(
+          installment => ({
+            installmentNumber:
+              installment.installmentNumber,
+
+            dueDate:
+              installment.dueDate,
+
+            amount:
+              installment.amount,
+          }),
+        ),
     };
 
     this.saving.set(true);
@@ -203,11 +351,10 @@ export class SalesComponent {
       .createSale(request)
       .pipe(
         catchError(response => {
-          const message =
+          this.error.set(
             response?.error?.error ??
-            'Não foi possível registrar a venda.';
-
-          this.error.set(message);
+            'Não foi possível registrar a venda.',
+          );
 
           return of(null);
         }),
@@ -233,6 +380,7 @@ export class SalesComponent {
         '',
         Validators.required,
       ],
+
       quantity: [
         1,
         [
@@ -240,6 +388,7 @@ export class SalesComponent {
           Validators.min(0.001),
         ],
       ],
+
       unitPrice: [
         0,
         [
@@ -262,6 +411,10 @@ export class SalesComponent {
       sales:
         this.salesService
           .getRecentSales(20),
+
+      customers:
+        this.customersService
+          .getCustomers('', 1000),
     })
       .pipe(
         catchError(() => {
@@ -287,16 +440,16 @@ export class SalesComponent {
         this.recentSales.set(
           data.sales,
         );
+
+        this.customers.set(
+          data.customers,
+        );
       });
   }
 
   private resetForm(): void {
     this.form.controls
-      .customerName
-      .setValue('');
-
-    this.form.controls
-      .customerPhone
+      .customerId
       .setValue('');
 
     this.form.controls
@@ -305,14 +458,108 @@ export class SalesComponent {
         DeliveryMethod.Delivery,
       );
 
-    while (
-      this.items.length > 0
-    ) {
-      this.items.removeAt(0);
-    }
+    this.form.controls
+      .paymentCondition
+      .setValue('cash');
+
+    this.form.controls
+      .installmentCount
+      .setValue(2);
+
+    this.form.controls
+      .firstDueDate
+      .setValue(
+        this.todayString(),
+      );
+
+    this.items.clear();
 
     this.items.push(
       this.createItemGroup(),
     );
+
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
+  }
+
+  private todayString(): string {
+    return this.formatDateOnly(
+      new Date(),
+    );
+  }
+
+  private parseDateOnly(
+    value: string,
+  ): Date {
+    const [
+      year,
+      month,
+      day,
+    ] =
+      value
+        .split('-')
+        .map(Number);
+
+    return new Date(
+      year,
+      month - 1,
+      day,
+      12,
+      0,
+      0,
+    );
+  }
+
+  private formatDateOnly(
+    value: Date,
+  ): string {
+    const year =
+      value.getFullYear();
+
+    const month =
+      String(
+        value.getMonth() + 1,
+      ).padStart(2, '0');
+
+    const day =
+      String(
+        value.getDate(),
+      ).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
+  private addMonths(
+    value: Date,
+    months: number,
+  ): Date {
+    const originalDay =
+      value.getDate();
+
+    const result =
+      new Date(value);
+
+    result.setDate(1);
+
+    result.setMonth(
+      result.getMonth() +
+      months,
+    );
+
+    const lastDay =
+      new Date(
+        result.getFullYear(),
+        result.getMonth() + 1,
+        0,
+      ).getDate();
+
+    result.setDate(
+      Math.min(
+        originalDay,
+        lastDay,
+      ),
+    );
+
+    return result;
   }
 }

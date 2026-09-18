@@ -11,4 +11,6 @@ public sealed record CreateSaleResult(
     decimal TotalValue,
     DateTime OccurredAtUtc,
     DeliveryMethod DeliveryMethod,
-    DeliveryStatus DeliveryStatus);
+    DeliveryStatus DeliveryStatus,
+    int Receivables,
+    decimal ScheduledAmount);
