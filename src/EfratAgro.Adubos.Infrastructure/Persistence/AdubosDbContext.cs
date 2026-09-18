@@ -1,11 +1,14 @@
 using EfratAgro.Adubos.Domain.Catalog;
+using EfratAgro.Adubos.Domain.Customers;
 using EfratAgro.Adubos.Domain.Inventory;
 using EfratAgro.Adubos.Domain.Legacy;
+using EfratAgro.Adubos.Domain.Sales;
 using Microsoft.EntityFrameworkCore;
 
 namespace EfratAgro.Adubos.Infrastructure.Persistence;
 
-public sealed class AdubosDbContext : DbContext
+public sealed class AdubosDbContext
+    : DbContext
 {
     public AdubosDbContext(
         DbContextOptions<AdubosDbContext> options)
@@ -30,6 +33,15 @@ public sealed class AdubosDbContext : DbContext
 
     public DbSet<LegacyImportRow> LegacyImportRows =>
         Set<LegacyImportRow>();
+
+    public DbSet<Customer> Customers =>
+        Set<Customer>();
+
+    public DbSet<Sale> Sales =>
+        Set<Sale>();
+
+    public DbSet<SaleItem> SaleItems =>
+        Set<SaleItem>();
 
     protected override void OnModelCreating(
         ModelBuilder modelBuilder)

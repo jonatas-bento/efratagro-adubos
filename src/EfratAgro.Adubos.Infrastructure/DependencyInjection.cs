@@ -1,6 +1,8 @@
 using EfratAgro.Adubos.Application.Inventory;
+using EfratAgro.Adubos.Application.Sales;
 using EfratAgro.Adubos.Infrastructure.Inventory;
 using EfratAgro.Adubos.Infrastructure.Persistence;
+using EfratAgro.Adubos.Infrastructure.Sales;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,6 +32,10 @@ public static class DependencyInjection
         services.AddScoped<
             IInventoryQueryService,
             InventoryQueryService>();
+
+        services.AddScoped<
+            ISaleService,
+            SaleService>();
 
         return services;
     }

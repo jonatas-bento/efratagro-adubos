@@ -1,4 +1,5 @@
 using EfratAgro.Adubos.Application.Inventory;
+using EfratAgro.Adubos.Application.Sales;
 using EfratAgro.Adubos.Infrastructure;
 
 var builder =
@@ -45,6 +46,44 @@ app.MapGet(
     })
     .WithName("GetInventory")
     .WithTags("Inventory");
+
+app.MapPost(
+    "/api/sales",
+    async (
+        CreateSaleRequest request,
+        ISaleService sales,
+        CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var result =
+                await sales.CreateAsync(
+                    request,
+                    cancellationToken);
+
+            return Results.Created(
+                $"/api/sales/{result.SaleId}",
+                result);
+        }
+        catch (ArgumentException ex)
+        {
+            return Results.BadRequest(
+                new
+                {
+                    error = ex.Message
+                });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.BadRequest(
+                new
+                {
+                    error = ex.Message
+                });
+        }
+    })
+    .WithName("CreateSale")
+    .WithTags("Sales");
 
 app.Run();
 
