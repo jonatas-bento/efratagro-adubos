@@ -10,6 +10,7 @@ public sealed class LegacyImportRow
         Guid batchId,
         string sheetName,
         int rowNumber,
+        string sourceCell,
         string rawData)
     {
         if (batchId == Guid.Empty)
@@ -33,6 +34,13 @@ public sealed class LegacyImportRow
                 "Row number must be greater than zero.");
         }
 
+        if (string.IsNullOrWhiteSpace(sourceCell))
+        {
+            throw new ArgumentException(
+                "Source cell is required.",
+                nameof(sourceCell));
+        }
+
         if (string.IsNullOrWhiteSpace(rawData))
         {
             throw new ArgumentException(
@@ -43,11 +51,23 @@ public sealed class LegacyImportRow
         Id = Guid.NewGuid();
 
         BatchId = batchId;
-        SheetName = sheetName.Trim();
-        RowNumber = rowNumber;
-        RawData = rawData;
 
-        CreatedAtUtc = DateTime.UtcNow;
+        SheetName =
+            sheetName.Trim();
+
+        RowNumber =
+            rowNumber;
+
+        SourceCell =
+            sourceCell
+                .Trim()
+                .ToUpperInvariant();
+
+        RawData =
+            rawData;
+
+        CreatedAtUtc =
+            DateTime.UtcNow;
     }
 
     public Guid Id { get; private set; }
@@ -59,6 +79,8 @@ public sealed class LegacyImportRow
     public string SheetName { get; private set; } = null!;
 
     public int RowNumber { get; private set; }
+
+    public string SourceCell { get; private set; } = null!;
 
     public string RawData { get; private set; } = null!;
 

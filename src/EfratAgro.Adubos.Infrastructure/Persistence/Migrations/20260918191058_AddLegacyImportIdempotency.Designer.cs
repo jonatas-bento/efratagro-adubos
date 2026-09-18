@@ -3,6 +3,7 @@ using System;
 using EfratAgro.Adubos.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EfratAgro.Adubos.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AdubosDbContext))]
-    partial class AdubosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260918191058_AddLegacyImportIdempotency")]
+    partial class AddLegacyImportIdempotency
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -231,14 +234,9 @@ namespace EfratAgro.Adubos.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
-                    b.Property<string>("SourceCell")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("varchar(20)");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("BatchId", "SheetName", "SourceCell")
+                    b.HasIndex("BatchId", "SheetName", "RowNumber")
                         .IsUnique();
 
                     b.ToTable("legacy_import_rows", (string)null);

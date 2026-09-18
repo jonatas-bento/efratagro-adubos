@@ -16,6 +16,9 @@ public sealed class InventoryMovement
         StockBucket bucket,
         decimal quantity,
         DateTime occurredAtUtc,
+        Guid? legacyImportRowId = null,
+        string? referenceType = null,
+        Guid? referenceId = null,
         string? notes = null)
     {
         if (productId == Guid.Empty)
@@ -46,14 +49,23 @@ public sealed class InventoryMovement
 
         Type = type;
         Bucket = bucket;
-
         Quantity = quantity;
 
         OccurredAtUtc = occurredAtUtc;
 
-        Notes = string.IsNullOrWhiteSpace(notes)
-            ? null
-            : notes.Trim();
+        LegacyImportRowId = legacyImportRowId;
+
+        ReferenceType =
+            string.IsNullOrWhiteSpace(referenceType)
+                ? null
+                : referenceType.Trim();
+
+        ReferenceId = referenceId;
+
+        Notes =
+            string.IsNullOrWhiteSpace(notes)
+                ? null
+                : notes.Trim();
 
         CreatedAtUtc = DateTime.UtcNow;
     }

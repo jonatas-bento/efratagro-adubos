@@ -1,4 +1,9 @@
+using EfratAgro.Adubos.Infrastructure;
+using EfratAgro.Adubos.Infrastructure.Persistence;
 using EfratAgro.Adubos.LegacyImporter.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 const decimal expectedGrandTotal = 19174m;
 
@@ -13,15 +18,19 @@ var expectedSupplierTotals =
         ["EQUILÍBRIO"] = 1676m
     };
 
-var filePath = GetArgumentValue(args, "--file");
+var filePath =
+    GetArgumentValue(
+        args,
+        "--file");
 
 if (string.IsNullOrWhiteSpace(filePath))
 {
     Console.Error.WriteLine(
         "Usage:");
+
     Console.Error.WriteLine(
         "dotnet run --project tools/EfratAgro.Adubos.LegacyImporter -- " +
-        "--file <path-to-xlsx> --dry-run");
+        "--file <path-to-xlsx> (--dry-run | --persist)");
 
     return 2;
 }
@@ -32,13 +41,16 @@ var dryRun =
             "--dry-run",
             StringComparison.OrdinalIgnoreCase));
 
-if (!dryRun)
+var persist =
+    args.Any(x =>
+        x.Equals(
+            "--persist",
+            StringComparison.OrdinalIgnoreCase));
+
+if (dryRun == persist)
 {
     Console.Error.WriteLine(
-        "Persistence is intentionally disabled at this stage.");
-
-    Console.Error.WriteLine(
-        "Run the importer with --dry-run.");
+        "Choose exactly one mode: --dry-run or --persist.");
 
     return 3;
 }
@@ -49,7 +61,9 @@ try
         "============================================");
 
     Console.WriteLine(
-        " EFRATAGRO - LEGACY IMPORTER / DRY RUN");
+        dryRun
+            ? " EFRATAGRO - LEGACY IMPORTER / DRY RUN"
+            : " EFRATAGRO - LEGACY IMPORTER / PERSIST");
 
     Console.WriteLine(
         "============================================");
@@ -70,14 +84,6 @@ try
     var rows =
         reader.Read(filePath);
 
-    Console.WriteLine(
-        $"Product rows found: {rows.Count}");
-
-    Console.WriteLine(
-        $"Rows with stock > 0: {rows.Count(x => x.Quantity > 0)}");
-
-    Console.WriteLine();
-
     var supplierTotals =
         rows
             .GroupBy(
@@ -91,7 +97,15 @@ try
     var validationFailed = false;
 
     Console.WriteLine(
-        "===== TOTAL BY SUPPLIER =====");
+        $"Product rows found: {rows.Count}");
+
+    Console.WriteLine(
+        $"Rows with stock > 0: {rows.Count(x => x.Quantity > 0)}");
+
+    Console.WriteLine();
+
+    Console.WriteLine(
+        "===== RECONCILIATION =====");
 
     foreach (var expected in expectedSupplierTotals)
     {
@@ -118,59 +132,145 @@ try
         rows.Sum(x => x.Quantity);
 
     Console.WriteLine();
-    Console.WriteLine(
-        "===== GRAND TOTAL =====");
 
     Console.WriteLine(
-        $"Actual:   {grandTotal:N0}");
-
-    Console.WriteLine(
-        $"Expected: {expectedGrandTotal:N0}");
+        $"Grand total: {grandTotal:N0} / {expectedGrandTotal:N0}");
 
     if (grandTotal != expectedGrandTotal)
     {
         validationFailed = true;
     }
 
-    Console.WriteLine();
-
-    Console.WriteLine(
-        "===== SAMPLE NON-ZERO STOCK =====");
-
-    foreach (var row in rows
-                 .Where(x => x.Quantity > 0)
-                 .Take(15))
-    {
-        Console.WriteLine(
-            $"{row.Supplier,-12} " +
-            $"{row.Product,-35} " +
-            $"{row.Quantity,8:N0} " +
-            $"[row {row.ExcelRow}]");
-    }
-
-    Console.WriteLine();
-
     if (validationFailed)
     {
+        Console.Error.WriteLine();
         Console.Error.WriteLine(
-            "DRY RUN FAILED ❌");
+            "RECONCILIATION FAILED ❌");
 
         Console.Error.WriteLine(
-            "Spreadsheet totals do not match the migration baseline.");
+            "Persistence has been blocked.");
 
         return 10;
     }
 
+    Console.WriteLine();
     Console.WriteLine(
-        "DRY RUN PASSED ✅");
+        "RECONCILIATION PASSED ✅");
+
+    if (dryRun)
+    {
+        Console.WriteLine(
+            "No database changes were made.");
+
+        return 0;
+    }
+
+    var connectionString =
+        Environment.GetEnvironmentVariable(
+            "ConnectionStrings__DefaultConnection");
+
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        Console.Error.WriteLine();
+
+        Console.Error.WriteLine(
+            "ConnectionStrings__DefaultConnection is not set.");
+
+        return 20;
+    }
+
+    var builder =
+        Host.CreateApplicationBuilder(args);
+
+    builder.Configuration[
+        "ConnectionStrings:DefaultConnection"] =
+        connectionString;
+
+    builder.Services.AddInfrastructure(
+        builder.Configuration);
+
+    using var host =
+        builder.Build();
+
+    await using var scope =
+        host.Services.CreateAsyncScope();
+
+    var dbContext =
+        scope.ServiceProvider
+            .GetRequiredService<AdubosDbContext>();
+
+    if (!await dbContext.Database.CanConnectAsync())
+    {
+        Console.Error.WriteLine(
+            "Unable to connect to database.");
+
+        return 21;
+    }
+
+    var pendingMigrations =
+        await dbContext.Database
+            .GetPendingMigrationsAsync();
+
+    if (pendingMigrations.Any())
+    {
+        Console.Error.WriteLine(
+            "Database has pending migrations.");
+
+        foreach (var migration
+                 in pendingMigrations)
+        {
+            Console.Error.WriteLine(
+                $" - {migration}");
+        }
+
+        return 22;
+    }
+
+    var persistence =
+        new WarehouseImportPersistenceService(
+            dbContext);
+
+    var result =
+        await persistence.ImportAsync(
+            filePath,
+            rows);
+
+    Console.WriteLine();
 
     Console.WriteLine(
-        "The ARMAZÉM snapshot reconciles with the legacy baseline.");
+        "===== IMPORT COMPLETED =====");
+
+    Console.WriteLine(
+        $"Batch:               {result.BatchId}");
+
+    Console.WriteLine(
+        $"SHA-256:             {result.FileHash}");
+
+    Console.WriteLine(
+        $"Legacy rows:         {result.LegacyRows}");
+
+    Console.WriteLine(
+        $"Suppliers:           {result.Suppliers}");
+
+    Console.WriteLine(
+        $"Products:            {result.Products}");
+
+    Console.WriteLine(
+        $"Opening movements:   {result.InventoryMovements}");
+
+    Console.WriteLine(
+        $"Opening quantity:    {result.TotalQuantity:N0}");
+
+    Console.WriteLine();
+
+    Console.WriteLine(
+        "PERSISTENCE PASSED ✅");
 
     return 0;
 }
 catch (Exception ex)
 {
+    Console.Error.WriteLine();
     Console.Error.WriteLine(
         $"IMPORT ERROR ❌ {ex.Message}");
 

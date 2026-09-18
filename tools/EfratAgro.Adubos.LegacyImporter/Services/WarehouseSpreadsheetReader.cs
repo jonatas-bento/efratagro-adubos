@@ -14,7 +14,8 @@ public sealed class WarehouseSpreadsheetReader
         new("EQUILÍBRIO", 22, 23, 24, 25)
     ];
 
-    public IReadOnlyList<WarehouseImportRow> Read(string filePath)
+    public IReadOnlyList<WarehouseImportRow> Read(
+        string filePath)
     {
         if (!File.Exists(filePath))
         {
@@ -23,11 +24,14 @@ public sealed class WarehouseSpreadsheetReader
                 filePath);
         }
 
-        using var workbook = new XLWorkbook(filePath);
+        using var workbook =
+            new XLWorkbook(filePath);
 
-        var worksheet = workbook.Worksheet("ARMAZÉM");
+        var worksheet =
+            workbook.Worksheet("ARMAZÉM");
 
-        var result = new List<WarehouseImportRow>();
+        var result =
+            new List<WarehouseImportRow>();
 
         foreach (var block in Blocks)
         {
@@ -53,10 +57,14 @@ public sealed class WarehouseSpreadsheetReader
              rowNumber++)
         {
             var productCell =
-                worksheet.Cell(rowNumber, block.ProductColumn);
+                worksheet.Cell(
+                    rowNumber,
+                    block.ProductColumn);
 
             var product =
-                productCell.GetString().Trim();
+                productCell
+                    .GetString()
+                    .Trim();
 
             if (string.IsNullOrWhiteSpace(product))
             {
@@ -71,7 +79,9 @@ public sealed class WarehouseSpreadsheetReader
             }
 
             var quantityCell =
-                worksheet.Cell(rowNumber, block.QuantityColumn);
+                worksheet.Cell(
+                    rowNumber,
+                    block.QuantityColumn);
 
             decimal quantity = 0;
 
@@ -81,7 +91,8 @@ public sealed class WarehouseSpreadsheetReader
                         out quantity))
                 {
                     throw new InvalidOperationException(
-                        $"Invalid quantity at ARMAZÉM row {rowNumber}, " +
+                        $"Invalid quantity at ARMAZÉM " +
+                        $"row {rowNumber}, " +
                         $"column {block.QuantityColumn} " +
                         $"for product '{product}'.");
                 }
@@ -89,15 +100,34 @@ public sealed class WarehouseSpreadsheetReader
 
             var safraRaw =
                 worksheet
-                    .Cell(rowNumber, block.SafraColumn)
+                    .Cell(
+                        rowNumber,
+                        block.SafraColumn)
                     .GetFormattedString()
                     .Trim();
 
             var priceRaw =
                 worksheet
-                    .Cell(rowNumber, block.PriceColumn)
+                    .Cell(
+                        rowNumber,
+                        block.PriceColumn)
                     .GetFormattedString()
                     .Trim();
+
+            var sourceCell =
+                productCell.Address?.ToString();
+
+            if (string.IsNullOrWhiteSpace(sourceCell))
+            {
+                throw new InvalidOperationException(
+                    $"Unable to determine source cell " +
+                    $"for ARMAZÉM row {rowNumber}.");
+            }
+
+            sourceCell =
+                sourceCell.Replace(
+                    "$",
+                    string.Empty);
 
             result.Add(
                 new WarehouseImportRow(
@@ -110,7 +140,8 @@ public sealed class WarehouseSpreadsheetReader
                     string.IsNullOrWhiteSpace(priceRaw)
                         ? null
                         : priceRaw,
-                    rowNumber));
+                    rowNumber,
+                    sourceCell));
         }
     }
 

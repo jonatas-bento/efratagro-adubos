@@ -6,4 +6,5 @@ public sealed record WarehouseImportRow(
     decimal Quantity,
     string? SafraRaw,
     string? PriceRaw,
-    int ExcelRow);
+    int ExcelRow,
+    string SourceCell);

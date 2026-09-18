@@ -24,6 +24,10 @@ public sealed class LegacyImportRowConfiguration
         builder.Property(x => x.RowNumber)
             .IsRequired();
 
+        builder.Property(x => x.SourceCell)
+            .HasMaxLength(20)
+            .IsRequired();
+
         builder.Property(x => x.RawData)
             .HasColumnType("longtext")
             .IsRequired();
@@ -47,7 +51,7 @@ public sealed class LegacyImportRowConfiguration
         {
             x.BatchId,
             x.SheetName,
-            x.RowNumber
+            x.SourceCell
         })
         .IsUnique();
     }
