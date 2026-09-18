@@ -1,13 +1,16 @@
+using EfratAgro.Adubos.Application.Inventory;
 using EfratAgro.Adubos.Infrastructure;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder =
+    WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 
 builder.Services.AddInfrastructure(
     builder.Configuration);
 
-var app = builder.Build();
+var app =
+    builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
@@ -16,15 +19,32 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/health", () =>
-{
-    return Results.Ok(new
+app.MapGet(
+    "/health",
+    () => Results.Ok(
+        new
+        {
+            status = "healthy",
+            service = "EfratAgro.Adubos.Api",
+            timestampUtc = DateTime.UtcNow
+        }));
+
+app.MapGet(
+    "/api/inventory",
+    async (
+        string? q,
+        IInventoryQueryService inventory,
+        CancellationToken cancellationToken) =>
     {
-        status = "healthy",
-        service = "EfratAgro.Adubos.Api",
-        timestampUtc = DateTime.UtcNow
-    });
-});
+        var result =
+            await inventory.GetInventoryAsync(
+                q,
+                cancellationToken);
+
+        return Results.Ok(result);
+    })
+    .WithName("GetInventory")
+    .WithTags("Inventory");
 
 app.Run();
 

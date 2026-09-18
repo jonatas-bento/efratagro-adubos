@@ -1,3 +1,5 @@
+using EfratAgro.Adubos.Application.Inventory;
+using EfratAgro.Adubos.Infrastructure.Inventory;
 using EfratAgro.Adubos.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -13,14 +15,21 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         var connectionString =
-            configuration.GetConnectionString("DefaultConnection")
+            configuration.GetConnectionString(
+                "DefaultConnection")
             ?? throw new InvalidOperationException(
                 "Connection string 'DefaultConnection' was not found.");
 
-        services.AddDbContext<AdubosDbContext>(options =>
-        {
-            options.UseMySQL(connectionString);
-        });
+        services.AddDbContext<AdubosDbContext>(
+            options =>
+            {
+                options.UseMySQL(
+                    connectionString);
+            });
+
+        services.AddScoped<
+            IInventoryQueryService,
+            InventoryQueryService>();
 
         return services;
     }
