@@ -29,6 +29,7 @@ import {
 import {
   CreateSaleRequest,
   CreateSaleResult,
+  DeliveryMethod,
   SaleSummary,
 } from './sale-models';
 import {
@@ -47,6 +48,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SalesComponent {
+  readonly deliveryMethods = DeliveryMethod;
   private readonly fb =
     inject(FormBuilder).nonNullable;
 
@@ -90,6 +92,10 @@ export class SalesComponent {
         ],
       ],
       customerPhone: [''],
+      deliveryMethod: [
+        DeliveryMethod.Delivery,
+        Validators.required,
+      ],
       items: this.fb.array([
         this.createItemGroup(),
       ]),
@@ -172,6 +178,9 @@ export class SalesComponent {
       customerPhone:
         raw.customerPhone.trim() ||
         null,
+
+      deliveryMethod:
+        Number(raw.deliveryMethod) as DeliveryMethod,
 
       items:
         raw.items.map(
@@ -289,6 +298,12 @@ export class SalesComponent {
     this.form.controls
       .customerPhone
       .setValue('');
+
+    this.form.controls
+      .deliveryMethod
+      .setValue(
+        DeliveryMethod.Delivery,
+      );
 
     while (
       this.items.length > 0

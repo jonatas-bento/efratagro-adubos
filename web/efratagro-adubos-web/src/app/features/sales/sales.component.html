@@ -69,6 +69,32 @@
               autocomplete="off"
             >
           </label>
+
+          <label>
+            <span>Forma de recebimento</span>
+
+            <select
+              formControlName="deliveryMethod"
+            >
+              <option
+                [ngValue]="deliveryMethods.Delivery"
+              >
+                Entrega
+              </option>
+
+              <option
+                [ngValue]="deliveryMethods.StorePickup"
+              >
+                Retirada na loja
+              </option>
+
+              <option
+                [ngValue]="deliveryMethods.WarehousePickup"
+              >
+                Retirada no armazém
+              </option>
+            </select>
+          </label>
         </div>
 
         <div
@@ -95,7 +121,7 @@
 
           @for (
             item of items.controls;
-            track $index;
+            track item;
             let index = $index
           ) {
             <article

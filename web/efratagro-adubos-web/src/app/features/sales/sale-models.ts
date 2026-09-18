@@ -1,3 +1,9 @@
+export enum DeliveryMethod {
+  Delivery = 1,
+  StorePickup = 2,
+  WarehousePickup = 3,
+}
+
 export interface CreateSaleItemRequest {
   productId: string;
   quantity: number;
@@ -7,6 +13,7 @@ export interface CreateSaleItemRequest {
 export interface CreateSaleRequest {
   customerName: string;
   customerPhone: string | null;
+  deliveryMethod: DeliveryMethod;
   items: CreateSaleItemRequest[];
 }
 
@@ -18,6 +25,8 @@ export interface CreateSaleResult {
   totalQuantity: number;
   totalValue: number;
   occurredAtUtc: string;
+  deliveryMethod: DeliveryMethod;
+  deliveryStatus: number;
 }
 
 export interface SaleSummary {
