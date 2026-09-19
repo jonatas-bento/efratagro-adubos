@@ -431,7 +431,7 @@ public sealed class CommercialImportPersistenceService
             }
 
             batch.Complete(
-                plan.SafeItemCount,
+                plan.Rows.Count,
                 plan.ReviewRowCount);
 
             EnsureNoForbiddenWrites();

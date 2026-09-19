@@ -93,6 +93,10 @@ public sealed class LegacyImportRow
 
     public SaleItem? SaleItem { get; private set; }
 
+    public DateTime? ResolvedAtUtc { get; private set; }
+
+    public string? ResolutionNote { get; private set; }
+
     public DateTime CreatedAtUtc { get; private set; }
 
     public void MarkForReview(
@@ -140,4 +144,45 @@ public sealed class LegacyImportRow
         SaleItemId =
             saleItemId;
     }
+
+    public void ResolveWithSaleItem(
+        Guid saleItemId,
+        string resolutionNote)
+    {
+        if (!RequiresReview)
+        {
+            throw new InvalidOperationException(
+                "Legacy row is not pending review.");
+        }
+
+        if (string.IsNullOrWhiteSpace(
+                resolutionNote))
+        {
+            throw new ArgumentException(
+                "Resolution note is required.",
+                nameof(resolutionNote));
+        }
+
+        var normalized =
+            resolutionNote.Trim();
+
+        if (normalized.Length > 1000)
+        {
+            throw new ArgumentException(
+                "Resolution note cannot exceed 1000 characters.",
+                nameof(resolutionNote));
+        }
+
+        LinkSaleItem(
+            saleItemId);
+
+        RequiresReview = false;
+
+        ResolvedAtUtc =
+            DateTime.UtcNow;
+
+        ResolutionNote =
+            normalized;
+    }
 }
+

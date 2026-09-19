@@ -38,6 +38,12 @@ public sealed class LegacyImportRowConfiguration
         builder.Property(x => x.ReviewReason)
             .HasMaxLength(500);
 
+        builder.Property(x => x.ResolvedAtUtc)
+            .HasColumnType("datetime(6)");
+
+        builder.Property(x => x.ResolutionNote)
+            .HasMaxLength(1000);
+
         builder.Property(x => x.CreatedAtUtc)
             .HasColumnType("datetime(6)")
             .IsRequired();
