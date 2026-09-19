@@ -68,7 +68,8 @@ public sealed class CustomerQueryService
                 {
                     x.Id,
                     x.CustomerId,
-                    x.OccurredAtUtc
+                    x.OccurredAtUtc,
+                    x.Origin
                 })
                 .ToListAsync(
                     cancellationToken);
@@ -211,6 +212,8 @@ public sealed class CustomerQueryService
                     overdue,
                     customerSales.Count(
                         x =>
+                            x.Origin ==
+                                SaleOrigin.Operational &&
                             !receivableSaleIds.Contains(
                                 x.Id)));
             })
@@ -477,6 +480,8 @@ public sealed class CustomerQueryService
                 overdueInstallments,
                 sales.Count(
                     x =>
+                        x.Origin ==
+                            SaleOrigin.Operational &&
                         !receivableSaleIds.Contains(
                             x.Id))),
             products,

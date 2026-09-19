@@ -41,11 +41,11 @@ public sealed class CustomerFinanceSemanticsTests
             customer.Id);
 
         Assert.Equal(
-            2,
+            3,
             customer.SalesCount);
 
         Assert.Equal(
-            1300m,
+            1400m,
             customer.TotalPurchased);
 
         Assert.Equal(
@@ -68,11 +68,11 @@ public sealed class CustomerFinanceSemanticsTests
             details);
 
         Assert.Equal(
-            2,
+            3,
             details.SalesCount);
 
         Assert.Equal(
-            1300m,
+            1400m,
             details.TotalPurchased);
 
         Assert.Equal(
@@ -93,7 +93,7 @@ public sealed class CustomerFinanceSemanticsTests
                 .SalesWithoutFinancialSchedule);
 
         Assert.Equal(
-            2,
+            3,
             details.Purchases.Count);
     }
 
@@ -111,6 +111,9 @@ public sealed class CustomerFinanceSemanticsTests
             Guid.NewGuid();
 
         var scheduledSaleId =
+            Guid.NewGuid();
+
+        var legacySaleId =
             Guid.NewGuid();
 
         var firstReceivableId =
@@ -259,6 +262,16 @@ public sealed class CustomerFinanceSemanticsTests
             saleOrigin,
             createdAtUtc);
 
+        await InsertSaleAsync(
+            dbContext,
+            legacySaleId,
+            customerId,
+            firstSaleAtUtc.AddDays(-1),
+            (int)DeliveryMethod.Unspecified,
+            (int)DeliveryStatus.NotTracked,
+            (int)SaleOrigin.Legacy,
+            createdAtUtc);
+
         await dbContext.Database
             .ExecuteSqlInterpolatedAsync(
                 $"""
@@ -301,6 +314,29 @@ public sealed class CustomerFinanceSemanticsTests
                     {productId},
                     {1m},
                     {300m},
+                    {createdAtUtc}
+                )
+                """);
+
+        await dbContext.Database
+            .ExecuteSqlInterpolatedAsync(
+                $"""
+                INSERT INTO sale_items
+                (
+                    Id,
+                    SaleId,
+                    ProductId,
+                    Quantity,
+                    UnitPrice,
+                    CreatedAtUtc
+                )
+                VALUES
+                (
+                    {Guid.NewGuid()},
+                    {legacySaleId},
+                    {productId},
+                    {2m},
+                    {50m},
                     {createdAtUtc}
                 )
                 """);
