@@ -2,12 +2,14 @@ using EfratAgro.Adubos.Application.Catalog;
 using EfratAgro.Adubos.Application.Customers;
 using EfratAgro.Adubos.Application.Deliveries;
 using EfratAgro.Adubos.Application.Inventory;
+using EfratAgro.Adubos.Application.Finance;
 using EfratAgro.Adubos.Application.Purchases;
 using EfratAgro.Adubos.Application.Sales;
 using EfratAgro.Adubos.Infrastructure.Catalog;
 using EfratAgro.Adubos.Infrastructure.Customers;
 using EfratAgro.Adubos.Infrastructure.Deliveries;
 using EfratAgro.Adubos.Infrastructure.Inventory;
+using EfratAgro.Adubos.Infrastructure.Finance;
 using EfratAgro.Adubos.Infrastructure.Persistence;
 using EfratAgro.Adubos.Infrastructure.Purchases;
 using EfratAgro.Adubos.Infrastructure.Sales;
@@ -76,6 +78,14 @@ public static class DependencyInjection
         services.AddScoped<
             ICustomerService,
             CustomerService>();
+
+        services.AddScoped<
+            IReceivableQueryService,
+            ReceivableQueryService>();
+
+        services.AddScoped<
+            IPaymentService,
+            PaymentService>();
 
         return services;
     }

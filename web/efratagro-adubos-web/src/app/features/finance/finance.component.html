@@ -1,0 +1,328 @@
+<main class="page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">
+        Financeiro
+      </span>
+
+      <h1>Contas a receber</h1>
+
+      <p>
+        Acompanhe vencimentos, pagamentos e
+        saldos dos clientes.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="secondary-button"
+      (click)="togglePaid()"
+    >
+      {{
+        showPaid()
+          ? 'Ocultar quitadas'
+          : 'Ver quitadas'
+      }}
+    </button>
+  </header>
+
+  @if (success()) {
+    <div class="message success">
+      {{ success() }}
+    </div>
+  }
+
+  @if (error()) {
+    <div class="message error">
+      {{ error() }}
+    </div>
+  }
+
+  @if (data(); as result) {
+    <section class="summary-grid">
+      <article>
+        <span>Programado</span>
+        <strong>
+          {{
+            result.summary.totalScheduled
+              | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+          }}
+        </strong>
+      </article>
+
+      <article>
+        <span>Recebido</span>
+        <strong>
+          {{
+            result.summary.totalReceived
+              | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+          }}
+        </strong>
+      </article>
+
+      <article>
+        <span>Em aberto</span>
+        <strong>
+          {{
+            result.summary.totalOutstanding
+              | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+          }}
+        </strong>
+      </article>
+
+      <article
+        [class.warning]="
+          result.summary.totalOverdue > 0
+        "
+      >
+        <span>Vencido</span>
+        <strong>
+          {{
+            result.summary.totalOverdue
+              | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+          }}
+        </strong>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <span class="section-label">
+            Recebíveis
+          </span>
+
+          <h2>Parcelas</h2>
+        </div>
+      </div>
+
+      @if (loading()) {
+        <div class="empty-state">
+          Carregando...
+        </div>
+      } @else if (
+        result.items.length === 0
+      ) {
+        <div class="empty-state">
+          Nenhuma parcela encontrada.
+        </div>
+      } @else {
+        <div class="receivable-list">
+          @for (
+            item of result.items;
+            track item.id
+          ) {
+            <article class="receivable-card">
+              <div class="customer">
+                <span
+                  class="status"
+                  [class.overdue]="
+                    item.status === 'Vencido' ||
+                    item.status === 'Parcial em atraso'
+                  "
+                  [class.paid]="
+                    item.status === 'Pago'
+                  "
+                >
+                  {{ item.status }}
+                </span>
+
+                <strong>
+                  {{ item.customerName }}
+                </strong>
+
+                <small>
+                  Parcela
+                  {{ item.installmentNumber }}
+                  · vence em
+                  {{
+                    item.dueDate
+                      | date:'dd/MM/yyyy'
+                  }}
+                </small>
+              </div>
+
+              <div class="values">
+                <div>
+                  <span>Valor</span>
+                  <strong>
+                    {{
+                      item.originalAmount
+                        | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+                    }}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Recebido</span>
+                  <strong>
+                    {{
+                      item.paidAmount
+                        | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+                    }}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Saldo</span>
+                  <strong>
+                    {{
+                      item.outstandingAmount
+                        | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+                    }}
+                  </strong>
+                </div>
+              </div>
+
+              @if (
+                item.outstandingAmount > 0
+              ) {
+                <button
+                  type="button"
+                  class="primary-button"
+                  (click)="openPayment(item)"
+                >
+                  Registrar recebimento
+                </button>
+              }
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
+
+  @if (selected(); as receivable) {
+    <div
+      class="modal-backdrop"
+      (click)="closePayment()"
+    >
+      <section
+        class="payment-modal"
+        (click)="$event.stopPropagation()"
+      >
+        <button
+          type="button"
+          class="close-button"
+          (click)="closePayment()"
+        >
+          ×
+        </button>
+
+        <span class="eyebrow">
+          Recebimento
+        </span>
+
+        <h2>
+          {{ receivable.customerName }}
+        </h2>
+
+        <p>
+          Parcela {{ receivable.installmentNumber }}
+          · saldo
+          {{
+            receivable.outstandingAmount
+              | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+          }}
+        </p>
+
+        <form
+          [formGroup]="paymentForm"
+          (ngSubmit)="registerPayment()"
+        >
+          <label>
+            <span>Valor recebido</span>
+
+            <input
+              type="number"
+              formControlName="amount"
+              min="0.01"
+              step="0.01"
+            />
+          </label>
+
+          <label>
+            <span>Meio de pagamento</span>
+
+            <select
+              formControlName="method"
+            >
+              <option
+                [ngValue]="paymentMethods.Pix"
+              >
+                Pix
+              </option>
+
+              <option
+                [ngValue]="paymentMethods.Cash"
+              >
+                Dinheiro
+              </option>
+
+              <option
+                [ngValue]="paymentMethods.Card"
+              >
+                Cartão
+              </option>
+
+              <option
+                [ngValue]="paymentMethods.BankTransfer"
+              >
+                Transferência
+              </option>
+
+              <option
+                [ngValue]="paymentMethods.Boleto"
+              >
+                Boleto
+              </option>
+
+              <option
+                [ngValue]="paymentMethods.Check"
+              >
+                Cheque
+              </option>
+
+              <option
+                [ngValue]="paymentMethods.Other"
+              >
+                Outro
+              </option>
+            </select>
+          </label>
+
+          <label>
+            <span>Referência</span>
+
+            <input
+              type="text"
+              formControlName="reference"
+              placeholder="Opcional"
+            />
+          </label>
+
+          <label>
+            <span>Observação</span>
+
+            <textarea
+              formControlName="notes"
+              placeholder="Opcional"
+            ></textarea>
+          </label>
+
+          <button
+            type="submit"
+            class="primary-button"
+            [disabled]="saving()"
+          >
+            {{
+              saving()
+                ? 'Registrando...'
+                : 'Confirmar recebimento'
+            }}
+          </button>
+        </form>
+      </section>
+    </div>
+  }
+</main>

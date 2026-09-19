@@ -2,6 +2,7 @@ using EfratAgro.Adubos.Application.Catalog;
 using EfratAgro.Adubos.Application.Customers;
 using EfratAgro.Adubos.Application.Deliveries;
 using EfratAgro.Adubos.Application.Inventory;
+using EfratAgro.Adubos.Application.Finance;
 using EfratAgro.Adubos.Application.Purchases;
 using EfratAgro.Adubos.Application.Sales;
 using EfratAgro.Adubos.Infrastructure;
@@ -273,6 +274,55 @@ app.MapPut(
         }
     })
     .WithTags("Customers");
+
+
+app.MapGet(
+    "/api/receivables",
+    async (
+        bool? openOnly,
+        int? take,
+        IReceivableQueryService receivables,
+        CancellationToken cancellationToken) =>
+        Results.Ok(
+            await receivables.GetAsync(
+                openOnly ?? true,
+                take ?? 200,
+                cancellationToken)))
+    .WithTags("Finance");
+
+app.MapPost(
+    "/api/receivables/{receivableId:guid}/payments",
+    async (
+        Guid receivableId,
+        RegisterPaymentRequest request,
+        IPaymentService payments,
+        CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var result =
+                await payments.RegisterAsync(
+                    receivableId,
+                    request,
+                    cancellationToken);
+
+            return Results.Created(
+                $"/api/receivables/{receivableId}/payments/{result.PaymentId}",
+                result);
+        }
+        catch (Exception ex)
+            when (
+                ex is ArgumentException or
+                InvalidOperationException)
+        {
+            return Results.BadRequest(
+                new
+                {
+                    error = ex.Message
+                });
+        }
+    })
+    .WithTags("Finance");
 
 app.Run();
 

@@ -1,4 +1,5 @@
 using EfratAgro.Adubos.Application.Customers;
+using EfratAgro.Adubos.Infrastructure.Common;
 using EfratAgro.Adubos.Domain.Sales;
 using EfratAgro.Adubos.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -116,7 +117,7 @@ public sealed class CustomerQueryService
                     x => x.Sum(y => y.Amount));
 
         var today =
-            DateTime.UtcNow.Date;
+            BusinessDate.Today;
 
         return customers
             .Select(customer =>
@@ -346,7 +347,7 @@ public sealed class CustomerQueryService
                 .ToHashSet();
 
         var today =
-            DateTime.UtcNow.Date;
+            BusinessDate.Today;
 
         decimal totalReceived = 0m;
         decimal outstanding = 0m;

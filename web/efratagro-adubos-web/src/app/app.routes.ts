@@ -9,6 +9,9 @@ import {
   DeliveriesComponent,
 } from './features/deliveries/deliveries.component';
 import {
+  FinanceComponent,
+} from './features/finance/finance.component';
+import {
   InventoryComponent,
 } from './features/inventory/inventory.component';
 import {
@@ -38,6 +41,11 @@ export const routes: Routes = [
     path: 'clientes',
     component: CustomersComponent,
     title: 'Clientes | EfratAgro',
+  },
+  {
+    path: 'financeiro',
+    component: FinanceComponent,
+    title: 'Financeiro | EfratAgro',
   },
   {
     path: 'entregas',
