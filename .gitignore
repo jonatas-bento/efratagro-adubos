@@ -33,3 +33,6 @@ backups/
 node_modules/
 dist/
 .angular/
+
+# Generated audit/import artifacts
+artifacts/
