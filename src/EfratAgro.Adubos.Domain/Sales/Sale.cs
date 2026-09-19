@@ -37,15 +37,23 @@ public sealed class Sale
 
         Id = Guid.NewGuid();
 
-        CustomerId = customerId;
-        OccurredAtUtc = occurredAtUtc;
+        CustomerId =
+            customerId;
 
-        DeliveryMethod = deliveryMethod;
-        DeliveryStatus = DeliveryStatus.Pending;
+        OccurredAtUtc =
+            occurredAtUtc;
 
-        Origin = origin;
+        DeliveryMethod =
+            deliveryMethod;
 
-        CreatedAtUtc = DateTime.UtcNow;
+        DeliveryStatus =
+            DeliveryStatus.Pending;
+
+        Origin =
+            origin;
+
+        CreatedAtUtc =
+            DateTime.UtcNow;
     }
 
     public Guid Id { get; private set; }
@@ -66,9 +74,51 @@ public sealed class Sale
 
     public DateTime CreatedAtUtc { get; private set; }
 
+    public static Sale CreateLegacy(
+        Guid customerId,
+        DateTime occurredAtUtc)
+    {
+        if (customerId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "Customer is required.",
+                nameof(customerId));
+        }
+
+        return new Sale
+        {
+            Id = Guid.NewGuid(),
+
+            CustomerId =
+                customerId,
+
+            OccurredAtUtc =
+                occurredAtUtc,
+
+            DeliveryMethod =
+                DeliveryMethod.Unspecified,
+
+            DeliveryStatus =
+                DeliveryStatus.NotTracked,
+
+            Origin =
+                SaleOrigin.Legacy,
+
+            CreatedAtUtc =
+                DateTime.UtcNow
+        };
+    }
+
     public void MarkDelivered(
         DateTime deliveredAtUtc)
     {
+        if (DeliveryStatus ==
+            DeliveryStatus.NotTracked)
+        {
+            throw new InvalidOperationException(
+                "Delivery is not tracked for this sale.");
+        }
+
         if (DeliveryStatus ==
             DeliveryStatus.Delivered)
         {

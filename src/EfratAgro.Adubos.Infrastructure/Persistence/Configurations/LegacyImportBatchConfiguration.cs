@@ -25,6 +25,14 @@ public sealed class LegacyImportBatchConfiguration
             .HasMaxLength(64)
             .IsRequired();
 
+        builder.Property(x => x.Scope)
+            .HasConversion<int>()
+            .HasDefaultValue(
+                LegacyImportScope.WarehouseOpeningStock)
+            .HasSentinel(
+                LegacyImportScope.Unspecified)
+            .IsRequired();
+
         builder.Property(x => x.StartedAtUtc)
             .HasColumnType("datetime(6)")
             .IsRequired();
@@ -38,7 +46,11 @@ public sealed class LegacyImportBatchConfiguration
         builder.Property(x => x.ReviewRows)
             .IsRequired();
 
-        builder.HasIndex(x => x.SourceFileHash)
-            .IsUnique();
+        builder.HasIndex(x => new
+        {
+            x.SourceFileHash,
+            x.Scope
+        })
+        .IsUnique();
     }
 }

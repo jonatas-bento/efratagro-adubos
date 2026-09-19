@@ -32,7 +32,11 @@ public sealed class WarehouseImportPersistenceService
         var alreadyImported =
             await _dbContext.LegacyImportBatches
                 .AnyAsync(
-                    x => x.SourceFileHash == fileHash,
+                    x =>
+                        x.SourceFileHash == fileHash
+                        &&
+                        x.Scope ==
+                            LegacyImportScope.WarehouseOpeningStock,
                     cancellationToken);
 
         if (alreadyImported)

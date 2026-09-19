@@ -9,6 +9,17 @@ public sealed class LegacyImportBatch
     public LegacyImportBatch(
         string sourceFileName,
         string sourceFileHash)
+        : this(
+            sourceFileName,
+            sourceFileHash,
+            LegacyImportScope.WarehouseOpeningStock)
+    {
+    }
+
+    public LegacyImportBatch(
+        string sourceFileName,
+        string sourceFileHash,
+        LegacyImportScope scope)
     {
         if (string.IsNullOrWhiteSpace(sourceFileName))
         {
@@ -24,15 +35,27 @@ public sealed class LegacyImportBatch
                 nameof(sourceFileHash));
         }
 
+        if (scope == LegacyImportScope.Unspecified)
+        {
+            throw new ArgumentException(
+                "Import scope is required.",
+                nameof(scope));
+        }
+
         Id = Guid.NewGuid();
 
-        SourceFileName = sourceFileName.Trim();
+        SourceFileName =
+            sourceFileName.Trim();
 
-        SourceFileHash = sourceFileHash
-            .Trim()
-            .ToUpperInvariant();
+        SourceFileHash =
+            sourceFileHash
+                .Trim()
+                .ToUpperInvariant();
 
-        StartedAtUtc = DateTime.UtcNow;
+        Scope = scope;
+
+        StartedAtUtc =
+            DateTime.UtcNow;
     }
 
     public Guid Id { get; private set; }
@@ -40,6 +63,8 @@ public sealed class LegacyImportBatch
     public string SourceFileName { get; private set; } = null!;
 
     public string SourceFileHash { get; private set; } = null!;
+
+    public LegacyImportScope Scope { get; private set; }
 
     public DateTime StartedAtUtc { get; private set; }
 

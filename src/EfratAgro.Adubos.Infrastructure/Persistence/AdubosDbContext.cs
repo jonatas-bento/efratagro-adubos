@@ -33,6 +33,9 @@ public sealed class AdubosDbContext
     public DbSet<LegacyImportRow> LegacyImportRows =>
         Set<LegacyImportRow>();
 
+    public DbSet<LegacySaleMetadata> LegacySaleMetadataEntries =>
+        Set<LegacySaleMetadata>();
+
     public DbSet<Customer> Customers => Set<Customer>();
 
     public DbSet<Sale> Sales => Set<Sale>();
