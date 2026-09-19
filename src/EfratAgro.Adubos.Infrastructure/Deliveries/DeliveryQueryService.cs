@@ -28,6 +28,12 @@ public sealed class DeliveryQueryService
         var query =
             _dbContext.Sales
                 .AsNoTracking()
+                .Where(x =>
+                    x.DeliveryStatus ==
+                        DeliveryStatus.Pending
+                    ||
+                    x.DeliveryStatus ==
+                        DeliveryStatus.Delivered)
                 .AsQueryable();
 
         if (pendingOnly)
