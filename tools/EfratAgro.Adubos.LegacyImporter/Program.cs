@@ -6,6 +6,19 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
+
+if (args.Any(
+        x =>
+            x.Equals(
+                "--resolve-known-reviews",
+                StringComparison.OrdinalIgnoreCase)))
+{
+    return await EfratAgro.Adubos.LegacyImporter.Commands
+        .KnownCommercialReviewResolutionCommand
+        .RunAsync(args);
+}
+
+
 const decimal expectedGrandTotal = 19174m;
 
 var expectedSupplierTotals =
