@@ -46,10 +46,34 @@ public sealed class PurchaseService
                 "A quantidade precisa ser maior que zero.");
         }
 
+        if (request.Items.Any(
+                x =>
+                    Math.Round(
+                        x.Quantity,
+                        3,
+                        MidpointRounding.AwayFromZero) !=
+                    x.Quantity))
+        {
+            throw new ArgumentException(
+                "A quantidade pode possuir no máximo 3 casas decimais.");
+        }
+
         if (request.Items.Any(x => x.UnitCost < 0))
         {
             throw new ArgumentException(
                 "O custo não pode ser negativo.");
+        }
+
+        if (request.Items.Any(
+                x =>
+                    Math.Round(
+                        x.UnitCost,
+                        2,
+                        MidpointRounding.AwayFromZero) !=
+                    x.UnitCost))
+        {
+            throw new ArgumentException(
+                "O custo pode possuir no máximo 2 casas decimais.");
         }
 
         if (request.Items
