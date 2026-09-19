@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\EfratAgro.Adubos.Api\EfratAgro.Adubos.Api.csproj" />
     <ProjectReference Include="..\..\src\EfratAgro.Adubos.Infrastructure\EfratAgro.Adubos.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\tools\EfratAgro.Adubos.LegacyImporter\EfratAgro.Adubos.LegacyImporter.csproj" />
   </ItemGroup>
 
 </Project>
