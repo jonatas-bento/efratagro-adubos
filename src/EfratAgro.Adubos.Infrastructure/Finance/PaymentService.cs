@@ -48,12 +48,9 @@ public sealed class PaymentService
         try
         {
             var receivable =
-                await _dbContext.Receivables
-                    .SingleOrDefaultAsync(
-                        x =>
-                            x.Id ==
-                            receivableId,
-                        cancellationToken)
+                await GetReceivableForUpdateAsync(
+                    receivableId,
+                    cancellationToken)
                 ?? throw new InvalidOperationException(
                     "Recebível não encontrado.");
 
@@ -135,5 +132,46 @@ public sealed class PaymentService
 
             throw;
         }
+    }
+
+    private async Task<Receivable?>
+        GetReceivableForUpdateAsync(
+            Guid receivableId,
+            CancellationToken cancellationToken)
+    {
+        var providerName =
+            _dbContext.Database.ProviderName;
+
+        var isMySql =
+            providerName?.Contains(
+                "MySql",
+                StringComparison.OrdinalIgnoreCase) ==
+            true;
+
+        if (isMySql)
+        {
+            var lockedReceivables =
+                await _dbContext.Receivables
+                    .FromSqlInterpolated(
+                        $"""
+                        SELECT *
+                        FROM `receivables`
+                        WHERE `Id` = {receivableId}
+                        FOR UPDATE
+                        """)
+                    .ToListAsync(
+                        cancellationToken);
+
+            return lockedReceivables
+                .SingleOrDefault();
+        }
+
+        return
+            await _dbContext.Receivables
+                .SingleOrDefaultAsync(
+                    x =>
+                        x.Id ==
+                        receivableId,
+                    cancellationToken);
     }
 }
