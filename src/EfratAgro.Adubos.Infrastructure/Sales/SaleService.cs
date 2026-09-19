@@ -54,10 +54,32 @@ public sealed class SaleService
                 "A quantidade precisa ser maior que zero.");
         }
 
+        if (request.Items.Any(
+                x =>
+                    Math.Round(
+                        x.Quantity,
+                        3) !=
+                    x.Quantity))
+        {
+            throw new ArgumentException(
+                "A quantidade deve ter no máximo três casas decimais.");
+        }
+
         if (request.Items.Any(x => x.UnitPrice < 0))
         {
             throw new ArgumentException(
                 "O preço não pode ser negativo.");
+        }
+
+        if (request.Items.Any(
+                x =>
+                    Math.Round(
+                        x.UnitPrice,
+                        2) !=
+                    x.UnitPrice))
+        {
+            throw new ArgumentException(
+                "O preço unitário deve ter no máximo duas casas decimais.");
         }
 
         if (request.Items
@@ -83,6 +105,17 @@ public sealed class SaleService
         {
             throw new ArgumentException(
                 "A programação financeira contém uma parcela inválida.");
+        }
+
+        if (request.Receivables.Any(
+                x =>
+                    Math.Round(
+                        x.Amount,
+                        2) !=
+                    x.Amount))
+        {
+            throw new ArgumentException(
+                "As parcelas devem ter no máximo duas casas decimais.");
         }
 
         var totalValue =

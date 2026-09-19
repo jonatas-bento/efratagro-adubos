@@ -324,6 +324,177 @@ public sealed class FinancialIntegrityTests
             await database.DbContext.Payments.CountAsync());
     }
 
+
+    [Fact]
+    public async Task Payment_ShouldRejectSubCentAmount()
+    {
+        await using var database =
+            await TestDatabase.CreateAsync();
+
+        var receivableId =
+            await SeedReceivableAsync(
+                database.DbContext,
+                originalAmount: 100.00m);
+
+        var service =
+            new PaymentService(
+                database.DbContext);
+
+        var exception =
+            await Assert.ThrowsAsync<ArgumentException>(
+                () =>
+                    service.RegisterAsync(
+                        receivableId,
+                        new RegisterPaymentRequest(
+                            Amount: 0.001m,
+                            Method: PaymentMethod.Pix,
+                            Reference: null,
+                            Notes: null)));
+
+        Assert.Equal(
+            "O valor recebido deve ter no máximo duas casas decimais.",
+            exception.Message);
+
+        Assert.Empty(
+            await database.DbContext.Payments
+                .ToListAsync());
+    }
+
+    [Fact]
+    public async Task Sale_ShouldRejectUnitPriceBeyondTwoDecimalPlaces()
+    {
+        await using var database =
+            await TestDatabase.CreateAsync();
+
+        var service =
+            new SaleService(
+                database.DbContext);
+
+        var request =
+            new CreateSaleRequest(
+                CustomerId: Guid.NewGuid(),
+                Items:
+                [
+                    new CreateSaleItemRequest(
+                        ProductId: Guid.NewGuid(),
+                        Quantity: 1m,
+                        UnitPrice: 10.001m)
+                ],
+                DeliveryMethod:
+                    DeliveryMethod.Delivery,
+                Receivables:
+                [
+                    new CreateSaleReceivableRequest(
+                        InstallmentNumber: 1,
+                        DueDate:
+                            DateTime.UtcNow.Date
+                                .AddDays(30),
+                        Amount: 10.00m)
+                ]);
+
+        var exception =
+            await Assert.ThrowsAsync<ArgumentException>(
+                () =>
+                    service.CreateAsync(
+                        request));
+
+        Assert.Equal(
+            "O preço unitário deve ter no máximo duas casas decimais.",
+            exception.Message);
+    }
+
+    [Fact]
+    public async Task Sale_ShouldRejectReceivableAmountsBeyondTwoDecimalPlaces()
+    {
+        await using var database =
+            await TestDatabase.CreateAsync();
+
+        var service =
+            new SaleService(
+                database.DbContext);
+
+        var request =
+            new CreateSaleRequest(
+                CustomerId: Guid.NewGuid(),
+                Items:
+                [
+                    new CreateSaleItemRequest(
+                        ProductId: Guid.NewGuid(),
+                        Quantity: 1m,
+                        UnitPrice: 10.00m)
+                ],
+                DeliveryMethod:
+                    DeliveryMethod.Delivery,
+                Receivables:
+                [
+                    new CreateSaleReceivableRequest(
+                        InstallmentNumber: 1,
+                        DueDate:
+                            DateTime.UtcNow.Date
+                                .AddDays(30),
+                        Amount: 5.001m),
+                    new CreateSaleReceivableRequest(
+                        InstallmentNumber: 2,
+                        DueDate:
+                            DateTime.UtcNow.Date
+                                .AddDays(60),
+                        Amount: 4.999m)
+                ]);
+
+        var exception =
+            await Assert.ThrowsAsync<ArgumentException>(
+                () =>
+                    service.CreateAsync(
+                        request));
+
+        Assert.Equal(
+            "As parcelas devem ter no máximo duas casas decimais.",
+            exception.Message);
+    }
+
+    [Fact]
+    public async Task Sale_ShouldRejectQuantityBeyondThreeDecimalPlaces()
+    {
+        await using var database =
+            await TestDatabase.CreateAsync();
+
+        var service =
+            new SaleService(
+                database.DbContext);
+
+        var request =
+            new CreateSaleRequest(
+                CustomerId: Guid.NewGuid(),
+                Items:
+                [
+                    new CreateSaleItemRequest(
+                        ProductId: Guid.NewGuid(),
+                        Quantity: 1.0001m,
+                        UnitPrice: 10.00m)
+                ],
+                DeliveryMethod:
+                    DeliveryMethod.Delivery,
+                Receivables:
+                [
+                    new CreateSaleReceivableRequest(
+                        InstallmentNumber: 1,
+                        DueDate:
+                            DateTime.UtcNow.Date
+                                .AddDays(30),
+                        Amount: 10.00m)
+                ]);
+
+        var exception =
+            await Assert.ThrowsAsync<ArgumentException>(
+                () =>
+                    service.CreateAsync(
+                        request));
+
+        Assert.Equal(
+            "A quantidade deve ter no máximo três casas decimais.",
+            exception.Message);
+    }
+
     private static CreateSaleRequest CreateSaleRequest(
         decimal scheduledAmount)
     {

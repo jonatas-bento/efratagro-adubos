@@ -33,6 +33,15 @@ public sealed class PaymentService
                 "O valor recebido deve ser maior que zero.");
         }
 
+        if (Math.Round(
+                request.Amount,
+                2) !=
+            request.Amount)
+        {
+            throw new ArgumentException(
+                "O valor recebido deve ter no máximo duas casas decimais.");
+        }
+
         if (request.Method ==
             PaymentMethod.Unspecified)
         {
