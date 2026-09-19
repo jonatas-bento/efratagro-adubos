@@ -8,8 +8,8 @@
       <h1>Entregas</h1>
 
       <p>
-        Acompanhe pedidos pendentes e confirme
-        quando a mercadoria chegar ao cliente.
+        Acompanhe entregas e retiradas pendentes
+        e confirme quando a operação logística for concluída.
       </p>
     </div>
 
@@ -107,13 +107,21 @@
       deliveries().length === 0
     ) {
       <div class="empty-state success-empty">
-        <strong>
-          Nenhuma entrega pendente.
-        </strong>
-
-        <span>
-          As operações estão em dia.
-        </span>
+        @if (showCompleted()) {
+          <strong>
+            Nenhuma entrega operacional encontrada.
+          </strong>
+          <span>
+            Ainda não há entregas pendentes ou concluídas.
+          </span>
+        } @else {
+          <strong>
+            Nenhuma entrega pendente.
+          </strong>
+          <span>
+            As operações estão em dia.
+          </span>
+        }
       </div>
     } @else {
       <div class="delivery-list">
@@ -198,9 +206,15 @@
                     : 'Marcar como entregue'
                 }}
               </button>
-            } @else {
+            } @else if (
+              delivery.status === 'Entregue'
+            ) {
               <div class="completed-label">
                 Entrega concluída ✓
+              </div>
+            } @else {
+              <div class="unknown-status-label">
+                Status logístico indisponível
               </div>
             }
           </article>
