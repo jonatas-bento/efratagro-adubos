@@ -23,25 +23,34 @@ public sealed class DeliveryQueryService
             CancellationToken cancellationToken = default)
     {
         var limit =
-            Math.Clamp(take, 1, 100);
+            Math.Clamp(
+                take,
+                1,
+                100);
 
         var query =
             _dbContext.Sales
                 .AsNoTracking()
-                .Where(x =>
-                    x.DeliveryStatus ==
-                        DeliveryStatus.Pending
-                    ||
-                    x.DeliveryStatus ==
-                        DeliveryStatus.Delivered)
-                .AsQueryable();
+                .Where(
+                    x =>
+                        x.Origin ==
+                            SaleOrigin.Operational
+                        &&
+                        (
+                            x.DeliveryStatus ==
+                                DeliveryStatus.Pending
+                            ||
+                            x.DeliveryStatus ==
+                                DeliveryStatus.Delivered
+                        ));
 
         if (pendingOnly)
         {
-            query = query.Where(
-                x =>
-                    x.DeliveryStatus ==
-                    DeliveryStatus.Pending);
+            query =
+                query.Where(
+                    x =>
+                        x.DeliveryStatus ==
+                            DeliveryStatus.Pending);
         }
 
         var sales =
@@ -49,33 +58,38 @@ public sealed class DeliveryQueryService
                 .OrderByDescending(
                     x => x.OccurredAtUtc)
                 .Take(limit)
-                .Select(x => new
-                {
-                    x.Id,
-                    CustomerName =
-                        x.Customer.Name,
-                    x.OccurredAtUtc,
-                    x.DeliveryMethod,
-                    x.DeliveryStatus,
-                    x.DeliveredAtUtc
-                })
+                .Select(
+                    x => new
+                    {
+                        x.Id,
+
+                        CustomerName =
+                            x.Customer.Name,
+
+                        x.OccurredAtUtc,
+                        x.DeliveryMethod,
+                        x.DeliveryStatus,
+                        x.DeliveredAtUtc
+                    })
                 .ToListAsync(
                     cancellationToken);
 
         var itemRows =
             await _dbContext.SaleItems
                 .AsNoTracking()
-                .Select(x => new
-                {
-                    x.SaleId,
-                    x.Quantity
-                })
+                .Select(
+                    x => new
+                    {
+                        x.SaleId,
+                        x.Quantity
+                    })
                 .ToListAsync(
                     cancellationToken);
 
         var quantities =
             itemRows
-                .GroupBy(x => x.SaleId)
+                .GroupBy(
+                    x => x.SaleId)
                 .ToDictionary(
                     group => group.Key,
                     group =>
@@ -83,18 +97,19 @@ public sealed class DeliveryQueryService
                             x => x.Quantity));
 
         return sales
-            .Select(sale =>
-                new DeliverySummaryDto(
-                    sale.Id,
-                    sale.CustomerName,
-                    sale.OccurredAtUtc,
-                    quantities.GetValueOrDefault(
-                        sale.Id),
-                    MethodLabel(
-                        sale.DeliveryMethod),
-                    StatusLabel(
-                        sale.DeliveryStatus),
-                    sale.DeliveredAtUtc))
+            .Select(
+                sale =>
+                    new DeliverySummaryDto(
+                        sale.Id,
+                        sale.CustomerName,
+                        sale.OccurredAtUtc,
+                        quantities.GetValueOrDefault(
+                            sale.Id),
+                        MethodLabel(
+                            sale.DeliveryMethod),
+                        StatusLabel(
+                            sale.DeliveryStatus),
+                        sale.DeliveredAtUtc))
             .ToList();
     }
 
@@ -122,11 +137,17 @@ public sealed class DeliveryQueryService
     {
         return status switch
         {
+            DeliveryStatus.Pending =>
+                "Pendente",
+
             DeliveryStatus.Delivered =>
                 "Entregue",
 
+            DeliveryStatus.NotTracked =>
+                "Não rastreado",
+
             _ =>
-                "Pendente"
+                "Não informado"
         };
     }
 }
