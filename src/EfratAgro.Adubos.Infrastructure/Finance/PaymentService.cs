@@ -76,14 +76,13 @@ public sealed class PaymentService
                     receivable.OriginalAmount -
                     totalPaid);
 
-            if (outstanding <= 0.01m)
+            if (outstanding <= 0m)
             {
                 throw new InvalidOperationException(
                     "Esta parcela já está quitada.");
             }
 
-            if (request.Amount >
-                outstanding + 0.01m)
+            if (request.Amount > outstanding)
             {
                 throw new InvalidOperationException(
                     $"O valor informado excede o saldo " +

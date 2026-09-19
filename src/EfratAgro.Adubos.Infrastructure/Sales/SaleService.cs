@@ -86,10 +86,13 @@ public sealed class SaleService
         }
 
         var totalValue =
-            request.Items.Sum(
-                x =>
-                    x.Quantity *
-                    x.UnitPrice);
+            Math.Round(
+                request.Items.Sum(
+                    x =>
+                        x.Quantity *
+                        x.UnitPrice),
+                2,
+                MidpointRounding.AwayFromZero);
 
         if (totalValue <= 0)
         {
@@ -101,9 +104,7 @@ public sealed class SaleService
             request.Receivables.Sum(
                 x => x.Amount);
 
-        if (Math.Abs(
-                totalValue -
-                scheduledAmount) > 0.01m)
+        if (totalValue != scheduledAmount)
         {
             throw new ArgumentException(
                 $"A programação financeira ({scheduledAmount:C}) " +

@@ -154,7 +154,7 @@ public sealed class ReceivableQueryService
         decimal outstanding,
         DateTime today)
     {
-        if (outstanding <= 0.01m)
+        if (outstanding <= 0m)
         {
             return "Pago";
         }
