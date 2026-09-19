@@ -47,6 +47,11 @@ public sealed class LegacyImportRowConfiguration
             .HasForeignKey(x => x.BatchId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasOne(x => x.SaleItem)
+            .WithMany()
+            .HasForeignKey(x => x.SaleItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(x => new
         {
             x.BatchId,
@@ -54,5 +59,8 @@ public sealed class LegacyImportRowConfiguration
             x.SourceCell
         })
         .IsUnique();
+
+        builder.HasIndex(x => x.SaleItemId)
+            .IsUnique();
     }
 }

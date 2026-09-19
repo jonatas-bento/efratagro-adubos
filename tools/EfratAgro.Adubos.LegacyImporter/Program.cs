@@ -1,3 +1,4 @@
+using EfratAgro.Adubos.LegacyImporter.Commands;
 using EfratAgro.Adubos.Infrastructure;
 using EfratAgro.Adubos.Infrastructure.Persistence;
 using EfratAgro.Adubos.LegacyImporter.Services;
@@ -30,7 +31,7 @@ if (string.IsNullOrWhiteSpace(filePath))
 
     Console.Error.WriteLine(
         "dotnet run --project tools/EfratAgro.Adubos.LegacyImporter -- " +
-        "--file <path-to-xlsx> (--dry-run | --persist)");
+        "--file <path-to-xlsx> --scope <warehouse|commercial> (--dry-run | --persist)");
 
     return 2;
 }
@@ -54,6 +55,34 @@ if (dryRun == persist)
 
     return 3;
 }
+
+var importScope =
+    GetArgumentValue(
+        args,
+        "--scope")
+    ??
+    "warehouse";
+
+if (importScope.Equals(
+        "commercial",
+        StringComparison.OrdinalIgnoreCase))
+{
+    return await CommercialImportCommand.RunAsync(
+        filePath,
+        dryRun,
+        args);
+}
+
+if (!importScope.Equals(
+        "warehouse",
+        StringComparison.OrdinalIgnoreCase))
+{
+    Console.Error.WriteLine(
+        "Invalid scope. Use 'warehouse' or 'commercial'.");
+
+    return 4;
+}
+
 
 try
 {

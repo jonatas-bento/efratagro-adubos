@@ -1,3 +1,5 @@
+using EfratAgro.Adubos.Domain.Sales;
+
 namespace EfratAgro.Adubos.Domain.Legacy;
 
 public sealed class LegacyImportRow
@@ -49,7 +51,6 @@ public sealed class LegacyImportRow
         }
 
         Id = Guid.NewGuid();
-
         BatchId = batchId;
 
         SheetName =
@@ -88,5 +89,55 @@ public sealed class LegacyImportRow
 
     public string? ReviewReason { get; private set; }
 
+    public Guid? SaleItemId { get; private set; }
+
+    public SaleItem? SaleItem { get; private set; }
+
     public DateTime CreatedAtUtc { get; private set; }
+
+    public void MarkForReview(
+        string reason)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            throw new ArgumentException(
+                "Review reason is required.",
+                nameof(reason));
+        }
+
+        var normalized =
+            reason.Trim();
+
+        if (normalized.Length > 500)
+        {
+            throw new ArgumentException(
+                "Review reason cannot exceed 500 characters.",
+                nameof(reason));
+        }
+
+        RequiresReview = true;
+        ReviewReason = normalized;
+    }
+
+    public void LinkSaleItem(
+        Guid saleItemId)
+    {
+        if (saleItemId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "Sale item is required.",
+                nameof(saleItemId));
+        }
+
+        if (
+            SaleItemId.HasValue &&
+            SaleItemId.Value != saleItemId)
+        {
+            throw new InvalidOperationException(
+                "Legacy row is already linked to another sale item.");
+        }
+
+        SaleItemId =
+            saleItemId;
+    }
 }

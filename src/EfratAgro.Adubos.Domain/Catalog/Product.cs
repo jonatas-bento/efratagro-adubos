@@ -58,6 +58,17 @@ public sealed class Product
 
     public DateTime? UpdatedAtUtc { get; private set; }
 
+    public void Deactivate()
+    {
+        if (!IsActive)
+        {
+            return;
+        }
+
+        IsActive = false;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
     private static string Normalize(string value)
     {
         return value
