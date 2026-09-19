@@ -160,6 +160,119 @@ public sealed class DeliveryQueryServiceTests
             pendingOnlyJson);
     }
 
+    [Fact]
+    public async Task GetAsync_ShouldExposeDeliveryDatesAsUtc()
+    {
+        await using var connection =
+            new SqliteConnection(
+                "Data Source=:memory:");
+
+        await connection.OpenAsync();
+
+        var options =
+            new DbContextOptionsBuilder<AdubosDbContext>()
+                .UseSqlite(connection)
+                .Options;
+
+        await using var dbContext =
+            new AdubosDbContext(options);
+
+        await dbContext.Database.EnsureCreatedAsync();
+
+        var customerId =
+            Guid.NewGuid();
+
+        var saleId =
+            Guid.NewGuid();
+
+        var occurredAt =
+            new DateTime(
+                2026,
+                9,
+                18,
+                22,
+                50,
+                18,
+                DateTimeKind.Unspecified);
+
+        var deliveredAt =
+            new DateTime(
+                2026,
+                9,
+                19,
+                16,
+                3,
+                7,
+                DateTimeKind.Unspecified);
+
+        var createdAt =
+            new DateTime(
+                2026,
+                9,
+                19,
+                16,
+                0,
+                0,
+                DateTimeKind.Unspecified);
+
+        await InsertCustomerAsync(
+            dbContext,
+            customerId,
+            "CLIENTE TESTE UTC",
+            createdAt);
+
+        await InsertSaleAsync(
+            dbContext,
+            saleId,
+            customerId,
+            occurredAt,
+            deliveryMethod: 1,
+            deliveryStatus: 2,
+            origin: 1,
+            deliveredAtUtc: deliveredAt,
+            createdAtUtc: createdAt);
+
+        var service =
+            new DeliveryQueryService(
+                dbContext);
+
+        var deliveries =
+            await service.GetAsync(
+                pendingOnly: false,
+                take: 100);
+
+        var delivery =
+            Assert.Single(
+                deliveries);
+
+        Assert.Equal(
+            DateTimeKind.Utc,
+            delivery.OccurredAtUtc.Kind);
+
+        Assert.NotNull(
+            delivery.DeliveredAtUtc);
+
+        Assert.Equal(
+            DateTimeKind.Utc,
+            delivery.DeliveredAtUtc.Value.Kind);
+
+        var occurredJson =
+            JsonSerializer.Serialize(
+                delivery.OccurredAtUtc);
+
+        var deliveredJson =
+            JsonSerializer.Serialize(
+                delivery.DeliveredAtUtc.Value);
+
+        Assert.EndsWith(
+            "Z\"",
+            occurredJson);
+
+        Assert.EndsWith(
+            "Z\"",
+            deliveredJson);
+    }
+
     private static Task<int> InsertCustomerAsync(
         AdubosDbContext dbContext,
         Guid id,

@@ -102,15 +102,43 @@ public sealed class DeliveryQueryService
                     new DeliverySummaryDto(
                         sale.Id,
                         sale.CustomerName,
-                        sale.OccurredAtUtc,
+                        AsUtc(
+                        sale.OccurredAtUtc),
                         quantities.GetValueOrDefault(
                             sale.Id),
                         MethodLabel(
                             sale.DeliveryMethod),
                         StatusLabel(
                             sale.DeliveryStatus),
-                        sale.DeliveredAtUtc))
+                        AsUtc(
+                        sale.DeliveredAtUtc)))
             .ToList();
+    }
+
+    private static DateTime AsUtc(
+        DateTime value)
+    {
+        return value.Kind switch
+        {
+            DateTimeKind.Utc =>
+                value,
+
+            DateTimeKind.Local =>
+                value.ToUniversalTime(),
+
+            _ =>
+                DateTime.SpecifyKind(
+                    value,
+                    DateTimeKind.Utc)
+        };
+    }
+
+    private static DateTime? AsUtc(
+        DateTime? value)
+    {
+        return value.HasValue
+            ? AsUtc(value.Value)
+            : null;
     }
 
     private static string MethodLabel(
