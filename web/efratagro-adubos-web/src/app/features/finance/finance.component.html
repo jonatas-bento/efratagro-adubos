@@ -237,6 +237,7 @@
               type="number"
               formControlName="amount"
               min="0.01"
+              [max]="receivable.outstandingAmount"
               step="0.01"
             />
           </label>

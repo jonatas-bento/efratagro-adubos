@@ -44,6 +44,11 @@ import {
   SalesService,
 } from './sales.service';
 
+import {
+  allocateInstallmentCents,
+  calculateSaleTotalCents,
+} from './sales-money';
+
 @Component({
   selector: 'app-sales',
   standalone: true,
@@ -201,20 +206,40 @@ export class SalesComponent {
   }
 
   saleTotal(): number {
-    return this.items.controls.reduce(
-      (total, _, index) =>
-        total +
-        this.itemTotal(index),
-      0,
+    return (
+      this.saleTotalCents() /
+      100
+    );
+  }
+
+  private saleTotalCents(): number {
+    return calculateSaleTotalCents(
+      this.items.controls.map(
+        control => {
+          const item =
+            control.getRawValue();
+
+          return {
+            quantity:
+              Number(
+                item.quantity,
+              ),
+            unitPrice:
+              Number(
+                item.unitPrice,
+              ),
+          };
+        },
+      ),
     );
   }
 
   financialSchedule():
       FinancialInstallmentPreview[] {
-    const total =
-      this.saleTotal();
+    const totalCents =
+      this.saleTotalCents();
 
-    if (total <= 0) {
+    if (totalCents <= 0) {
       return [];
     }
 
@@ -246,24 +271,14 @@ export class SalesComponent {
         firstDueDateValue,
       );
 
-    const totalCents =
-      Math.round(total * 100);
-
-    const baseCents =
-      Math.floor(
-        totalCents / count,
+    const installmentCents =
+      allocateInstallmentCents(
+        totalCents,
+        count,
       );
 
-    const remainder =
-      totalCents -
-      baseCents * count;
-
-    return Array.from(
-      { length: count },
-      (_, index) => {
-        const amountCents =
-          baseCents +
-          (index < remainder ? 1 : 0);
+    return installmentCents.map(
+      (amountCents, index) => {
 
         return {
           installmentNumber:
