@@ -1,58 +1,52 @@
-<header class="topbar">
-  <div class="topbar-content">
-    <a
-      routerLink="/estoque"
-      class="brand"
-      aria-label="EfratAgro"
-    >
-      <img
-        src="/brand/efratagro-logo-correta.png"
-        alt="EfratAgro Agroprodutos"
-      />
-    </a>
-
-    <nav aria-label="Navegação principal">
+@if (auth.isAuthenticated()) {
+  <header class="topbar">
+    <div class="topbar-content">
       <a
         routerLink="/estoque"
-        routerLinkActive="active"
+        class="brand"
+        aria-label="EfratAgro"
       >
-        Estoque
+        <img
+          src="/brand/efratagro-logo-correta.png"
+          alt="EfratAgro Agroprodutos"
+        />
       </a>
 
-      <a
-        routerLink="/vendas"
-        routerLinkActive="active"
-      >
-        Vendas
-      </a>
+      <nav aria-label="Navegação principal">
+        @for (
+          item of visibleItems();
+          track item.route
+        ) {
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="active"
+          >
+            {{ item.label }}
+          </a>
+        }
+      </nav>
 
-      <a
-        routerLink="/compras"
-        routerLinkActive="active"
-      >
-        Compras
-      </a>
+      <div class="user-area">
+        <div class="user-copy">
+          <strong>
+            {{
+              auth.currentUser()?.email
+            }}
+          </strong>
 
-      <a
-        routerLink="/clientes"
-        routerLinkActive="active"
-      >
-        Clientes
-      </a>
+          <span>
+            {{ roleLabel() }}
+          </span>
+        </div>
 
-      <a
-        routerLink="/financeiro"
-        routerLinkActive="active"
-      >
-        Financeiro
-      </a>
-
-      <a
-        routerLink="/entregas"
-        routerLinkActive="active"
-      >
-        Entregas
-      </a>
-    </nav>
-  </div>
-</header>
+        <button
+          type="button"
+          class="logout-button"
+          (click)="logout()"
+        >
+          Sair
+        </button>
+      </div>
+    </div>
+  </header>
+}

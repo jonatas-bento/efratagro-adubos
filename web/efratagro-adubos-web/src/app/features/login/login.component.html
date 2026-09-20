@@ -1,0 +1,86 @@
+<section class="login-page">
+  <div class="login-panel">
+    <div class="brand-area">
+      <img
+        src="/brand/efratagro-logo-correta.png"
+        alt="EfratAgro Agroprodutos"
+      />
+
+      <p>
+        Gestão comercial,
+        financeira e operacional
+        em um só lugar.
+      </p>
+    </div>
+
+    <div class="login-card">
+      <div class="login-heading">
+        <span>Acesso ao sistema</span>
+
+        <h1>
+          Bem-vindo ao EfratAgro
+        </h1>
+
+        <p>
+          Entre com suas credenciais
+          para continuar.
+        </p>
+      </div>
+
+      <form
+        [formGroup]="form"
+        (ngSubmit)="submit()"
+      >
+        <label>
+          <span>Email</span>
+
+          <input
+            type="email"
+            formControlName="email"
+            autocomplete="username"
+            placeholder="seu@email.com"
+          />
+        </label>
+
+        <label>
+          <span>Senha</span>
+
+          <input
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+            placeholder="Sua senha"
+          />
+        </label>
+
+        @if (errorMessage()) {
+          <div
+            class="login-error"
+            role="alert"
+          >
+            {{ errorMessage() }}
+          </div>
+        }
+
+        <button
+          type="submit"
+          [disabled]="
+            form.invalid ||
+            submitting()
+          "
+        >
+          @if (submitting()) {
+            Entrando...
+          } @else {
+            Entrar
+          }
+        </button>
+      </form>
+
+      <p class="security-note">
+        Acesso restrito aos usuários
+        autorizados da EfratAgro.
+      </p>
+    </div>
+  </div>
+</section>

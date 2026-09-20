@@ -118,3 +118,72 @@ nav a.active {
     width: 100%;
   }
 }
+
+.user-area {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex: 0 0 auto;
+}
+
+.user-copy {
+  display: grid;
+  gap: 0.1rem;
+  text-align: right;
+}
+
+.user-copy strong {
+  max-width: 13rem;
+  overflow: hidden;
+  color: #fff;
+  font-size: 0.76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-copy span {
+  color:
+    rgb(255 255 255 / 0.58);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.logout-button {
+  padding:
+    0.55rem 0.7rem;
+
+  border:
+    1px solid
+    rgb(255 255 255 / 0.16);
+
+  border-radius: 0.55rem;
+
+  background:
+    rgb(255 255 255 / 0.06);
+
+  color: #fff;
+
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  background:
+    rgb(255 255 255 / 0.12);
+}
+
+@media (max-width: 980px) {
+  .user-copy {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .user-area {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
