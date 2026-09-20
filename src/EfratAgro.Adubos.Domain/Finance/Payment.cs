@@ -80,4 +80,6 @@ public sealed class Payment
     public string? Notes { get; private set; }
 
     public DateTime CreatedAtUtc { get; private set; }
+
+    public PaymentReversal? Reversal { get; private set; }
 }

@@ -101,6 +101,7 @@ public sealed class CustomerQueryService
 
         var payments =
             await _dbContext.Payments
+                .Where(x => x.Reversal == null)
                 .AsNoTracking()
                 .Select(x => new
                 {
@@ -320,6 +321,7 @@ public sealed class CustomerQueryService
 
         var allPayments =
             await _dbContext.Payments
+                .Where(x => x.Reversal == null)
                 .AsNoTracking()
                 .Select(x => new
                 {

@@ -51,6 +51,9 @@ public sealed class AdubosDbContext
     public DbSet<Payment> Payments =>
         Set<Payment>();
 
+    public DbSet<PaymentReversal> PaymentReversals =>
+        Set<PaymentReversal>();
+
 
     public DbSet<Purchase> Purchases => Set<Purchase>();
 

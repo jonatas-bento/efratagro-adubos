@@ -6,4 +6,10 @@ public interface IPaymentService
         Guid receivableId,
         RegisterPaymentRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<ReversePaymentResult> ReverseAsync(
+        Guid paymentId,
+        Guid reversedByUserId,
+        ReversePaymentRequest request,
+        CancellationToken cancellationToken = default);
 }

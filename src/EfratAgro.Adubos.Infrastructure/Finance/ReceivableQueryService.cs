@@ -48,6 +48,7 @@ public sealed class ReceivableQueryService
 
         var payments =
             await _dbContext.Payments
+                .Where(x => x.Reversal == null)
                 .AsNoTracking()
                 .Select(x => new
                 {

@@ -383,6 +383,56 @@ app.MapPost(
     .WithTags("Finance")
     .RequireAuthorization(AuthorizationPolicies.Management);
 
+
+app.MapPost(
+    "/api/payments/{paymentId:guid}/reversal",
+    async (
+        Guid paymentId,
+        ReversePaymentRequest request,
+        HttpContext httpContext,
+        IPaymentService payments,
+        CancellationToken cancellationToken) =>
+    {
+        var subject =
+            httpContext.User
+                .FindFirst("sub")
+                ?.Value;
+
+        if (!Guid.TryParse(
+                subject,
+                out var reversedByUserId))
+        {
+            return Results.Unauthorized();
+        }
+
+        try
+        {
+            var result =
+                await payments.ReverseAsync(
+                    paymentId,
+                    reversedByUserId,
+                    request,
+                    cancellationToken);
+
+            return Results.Ok(
+                result);
+        }
+        catch (Exception ex)
+            when (
+                ex is ArgumentException or
+                InvalidOperationException)
+        {
+            return Results.BadRequest(
+                new
+                {
+                    error = ex.Message
+                });
+        }
+    })
+    .WithTags("Finance")
+    .RequireAuthorization(
+        AuthorizationPolicies.Management);
+
 app.Run();
 
 public partial class Program;
