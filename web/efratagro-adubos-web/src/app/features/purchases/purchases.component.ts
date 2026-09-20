@@ -122,6 +122,7 @@ export class PurchasesComponent {
     return this.inventory()
       .filter(
         product =>
+          product.isActive &&
           product.supplierName ===
           supplier.name,
       );

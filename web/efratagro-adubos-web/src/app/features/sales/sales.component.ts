@@ -103,6 +103,7 @@ export class SalesComponent {
       this.inventory()
         .filter(
           item =>
+            item.isActive &&
             item.quantity > 0,
         ),
     );

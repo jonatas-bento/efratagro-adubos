@@ -23,7 +23,7 @@ public sealed class InventoryQueryService
         var productsQuery =
             _dbContext.Products
                 .AsNoTracking()
-                .Where(x => x.IsActive);
+                .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -46,7 +46,8 @@ public sealed class InventoryQueryService
                 {
                     x.Id,
                     ProductName = x.Name,
-                    SupplierName = x.Supplier.Name
+                    SupplierName = x.Supplier.Name,
+                    x.IsActive
                 })
                 .ToListAsync(cancellationToken);
 
@@ -77,6 +78,7 @@ public sealed class InventoryQueryService
                     product.Id,
                     product.ProductName,
                     product.SupplierName,
+                    product.IsActive,
                     stockByProduct.GetValueOrDefault(
                         product.Id,
                         0m)))

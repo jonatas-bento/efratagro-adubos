@@ -267,3 +267,21 @@ h1 {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+
+.product-inactive {
+  opacity: 0.78;
+}
+
+.inactive-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+}

@@ -10,8 +10,8 @@
     </div>
 
     <p>
-      Consulte os produtos disponíveis no armazém
-      de forma rápida e simples.
+      Consulte os saldos físicos dos produtos
+      no armazém de forma rápida e simples.
     </p>
   </header>
 
@@ -87,7 +87,10 @@
         item of items();
         track item.productId
       ) {
-        <article class="product-card">
+        <article
+          class="product-card"
+          [class.product-inactive]="!item.isActive"
+        >
           <div class="product-info">
             <span class="supplier">
               {{ item.supplierName }}
@@ -96,6 +99,12 @@
             <strong>
               {{ item.productName }}
             </strong>
+
+            @if (!item.isActive) {
+              <span class="inactive-badge">
+                Inativo
+              </span>
+            }
           </div>
 
           <div

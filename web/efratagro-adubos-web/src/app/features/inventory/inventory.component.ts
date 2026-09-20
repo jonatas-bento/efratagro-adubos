@@ -49,7 +49,9 @@ export class InventoryComponent {
   readonly productsWithStock =
     computed(() =>
       this.items().filter(
-        item => item.quantity > 0,
+        item =>
+          item.isActive &&
+          item.quantity > 0,
       ).length,
     );
 
