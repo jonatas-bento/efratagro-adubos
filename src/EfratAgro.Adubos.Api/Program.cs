@@ -90,7 +90,8 @@ app.MapGet(
             await inventory.GetInventoryAsync(
                 q,
                 cancellationToken)))
-    .WithTags("Inventory");
+    .WithTags("Inventory")
+    .RequireAuthorization(AuthorizationPolicies.Operational);
 
 app.MapGet(
     "/api/suppliers",
@@ -100,7 +101,8 @@ app.MapGet(
         Results.Ok(
             await suppliers.GetAllAsync(
                 cancellationToken)))
-    .WithTags("Catalog");
+    .WithTags("Catalog")
+    .RequireAuthorization(AuthorizationPolicies.Management);
 
 app.MapGet(
     "/api/sales",
@@ -112,7 +114,8 @@ app.MapGet(
             await sales.GetRecentAsync(
                 take ?? 20,
                 cancellationToken)))
-    .WithTags("Sales");
+    .WithTags("Sales")
+    .RequireAuthorization(AuthorizationPolicies.Operational);
 
 app.MapPost(
     "/api/sales",
@@ -144,7 +147,8 @@ app.MapPost(
                 });
         }
     })
-    .WithTags("Sales");
+    .WithTags("Sales")
+    .RequireAuthorization(AuthorizationPolicies.Operational);
 
 app.MapGet(
     "/api/purchases",
@@ -156,7 +160,8 @@ app.MapGet(
             await purchases.GetRecentAsync(
                 take ?? 20,
                 cancellationToken)))
-    .WithTags("Purchases");
+    .WithTags("Purchases")
+    .RequireAuthorization(AuthorizationPolicies.Management);
 
 app.MapPost(
     "/api/purchases",
@@ -188,7 +193,8 @@ app.MapPost(
                 });
         }
     })
-    .WithTags("Purchases");
+    .WithTags("Purchases")
+    .RequireAuthorization(AuthorizationPolicies.Management);
 
 app.MapGet(
     "/api/deliveries",
@@ -202,7 +208,8 @@ app.MapGet(
                 pendingOnly ?? true,
                 take ?? 100,
                 cancellationToken)))
-    .WithTags("Deliveries");
+    .WithTags("Deliveries")
+    .RequireAuthorization(AuthorizationPolicies.Operational);
 
 app.MapPatch(
     "/api/deliveries/{saleId:guid}/complete",
@@ -231,7 +238,8 @@ app.MapPatch(
                 });
         }
     })
-    .WithTags("Deliveries");
+    .WithTags("Deliveries")
+    .RequireAuthorization(AuthorizationPolicies.Operational);
 
 
 app.MapGet(
@@ -246,7 +254,8 @@ app.MapGet(
                 q,
                 take ?? 100,
                 cancellationToken)))
-    .WithTags("Customers");
+    .WithTags("Customers")
+    .RequireAuthorization(AuthorizationPolicies.Operational);
 
 app.MapGet(
     "/api/customers/{customerId:guid}",
@@ -264,7 +273,8 @@ app.MapGet(
             ? Results.NotFound()
             : Results.Ok(customer);
     })
-    .WithTags("Customers");
+    .WithTags("Customers")
+    .RequireAuthorization(AuthorizationPolicies.Operational);
 
 app.MapPost(
     "/api/customers",
@@ -290,7 +300,8 @@ app.MapPost(
                 new { error = ex.Message });
         }
     })
-    .WithTags("Customers");
+    .WithTags("Customers")
+    .RequireAuthorization(AuthorizationPolicies.Operational);
 
 app.MapPut(
     "/api/customers/{customerId:guid}",
@@ -318,7 +329,8 @@ app.MapPut(
                 new { error = ex.Message });
         }
     })
-    .WithTags("Customers");
+    .WithTags("Customers")
+    .RequireAuthorization(AuthorizationPolicies.Operational);
 
 
 app.MapGet(
@@ -333,7 +345,8 @@ app.MapGet(
                 openOnly ?? true,
                 take ?? 200,
                 cancellationToken)))
-    .WithTags("Finance");
+    .WithTags("Finance")
+    .RequireAuthorization(AuthorizationPolicies.Management);
 
 app.MapPost(
     "/api/receivables/{receivableId:guid}/payments",
@@ -367,7 +380,8 @@ app.MapPost(
                 });
         }
     })
-    .WithTags("Finance");
+    .WithTags("Finance")
+    .RequireAuthorization(AuthorizationPolicies.Management);
 
 app.Run();
 

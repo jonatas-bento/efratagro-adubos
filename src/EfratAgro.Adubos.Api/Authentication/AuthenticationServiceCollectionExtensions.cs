@@ -1,3 +1,4 @@
+using EfratAgro.Adubos.Infrastructure.Identity;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -99,7 +100,32 @@ public static class AuthenticationServiceCollectionExtensions
                         };
                 });
 
-        services.AddAuthorization();
+        services.AddAuthorization(
+            options =>
+            {
+                options.AddPolicy(
+                    AuthorizationPolicies.Operational,
+                    policy =>
+                    {
+                        policy.RequireAuthenticatedUser();
+
+                        policy.RequireRole(
+                            ApplicationRoles.Admin,
+                            ApplicationRoles.Manager,
+                            ApplicationRoles.Seller);
+                    });
+
+                options.AddPolicy(
+                    AuthorizationPolicies.Management,
+                    policy =>
+                    {
+                        policy.RequireAuthenticatedUser();
+
+                        policy.RequireRole(
+                            ApplicationRoles.Admin,
+                            ApplicationRoles.Manager);
+                    });
+            });
 
         return services;
     }
