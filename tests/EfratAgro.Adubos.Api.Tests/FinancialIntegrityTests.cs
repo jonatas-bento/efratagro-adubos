@@ -95,6 +95,93 @@ public sealed class FinancialIntegrityTests
             result.Summary.TotalOutstanding);
     }
 
+    [Theory]
+    [InlineData(
+        false,
+        0,
+        ReceivableStatus.Pending,
+        "Pendente")]
+    [InlineData(
+        false,
+        5000,
+        ReceivableStatus.Partial,
+        "Parcial")]
+    [InlineData(
+        true,
+        0,
+        ReceivableStatus.Overdue,
+        "Vencido")]
+    [InlineData(
+        true,
+        5000,
+        ReceivableStatus.PartialOverdue,
+        "Parcial em atraso")]
+    [InlineData(
+        false,
+        10000,
+        ReceivableStatus.Paid,
+        "Pago")]
+    public async Task ReceivableQuery_ShouldExposeStableStatusCodeAndLabel(
+        bool overdue,
+        int paidCents,
+        ReceivableStatus expectedStatusCode,
+        string expectedStatus)
+    {
+        await using var database =
+            await TestDatabase.CreateAsync();
+
+        var dueDate =
+            overdue
+                ? new DateTime(
+                    2000,
+                    1,
+                    1)
+                : new DateTime(
+                    2099,
+                    1,
+                    1);
+
+        var receivableId =
+            await SeedReceivableAsync(
+                database.DbContext,
+                originalAmount: 100.00m,
+                dueDate: dueDate);
+
+        if (paidCents > 0)
+        {
+            database.DbContext.Payments.Add(
+                new Payment(
+                    receivableId,
+                    paidCents / 100m,
+                    DateTime.UtcNow,
+                    PaymentMethod.Pix));
+
+            await database.DbContext
+                .SaveChangesAsync();
+        }
+
+        var service =
+            new ReceivableQueryService(
+                database.DbContext);
+
+        var result =
+            await service.GetAsync(
+                openOnly: false,
+                take: 100);
+
+        var item =
+            Assert.Single(
+                result.Items);
+
+        Assert.Equal(
+            expectedStatusCode,
+            item.StatusCode);
+
+        Assert.Equal(
+            expectedStatus,
+            item.Status);
+    }
+
     [Fact]
     public async Task Payment_ShouldAllowExactRemainingCent()
     {
@@ -522,7 +609,8 @@ public sealed class FinancialIntegrityTests
 
     private static async Task<Guid> SeedReceivableAsync(
         AdubosDbContext dbContext,
-        decimal originalAmount)
+        decimal originalAmount,
+        DateTime? dueDate = null)
     {
         var customerId =
             Guid.NewGuid();
@@ -586,6 +674,7 @@ public sealed class FinancialIntegrityTests
                 saleId,
                 installmentNumber: 1,
                 dueDate:
+                    dueDate ??
                     DateTime.UtcNow.Date
                         .AddDays(30),
                 originalAmount);
