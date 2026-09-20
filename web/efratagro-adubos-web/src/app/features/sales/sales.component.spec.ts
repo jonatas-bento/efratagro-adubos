@@ -126,5 +126,121 @@ describe(
         );
       },
     );
+    it(
+      'rejects quantities with more than three decimal places',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            SalesComponent,
+          );
+
+        const component =
+          fixture.componentInstance;
+
+        const http =
+          TestBed.inject(
+            HttpTestingController,
+          );
+
+        const initialRequests =
+          http.match(() => true);
+
+        for (
+          const request
+          of initialRequests
+        ) {
+          request.flush([]);
+        }
+
+        http.verify();
+
+        const quantity =
+          component.items
+            .at(0)
+            .controls
+            .quantity;
+
+        quantity.setValue(
+          1.001,
+        );
+
+        expect(
+          quantity.valid,
+        ).toBe(true);
+
+        quantity.setValue(
+          1.0001,
+        );
+
+        expect(
+          quantity.hasError(
+            'decimalPrecision',
+          ),
+        ).toBe(true);
+
+        expect(
+          quantity.invalid,
+        ).toBe(true);
+      },
+    );
+
+    it(
+      'rejects unit prices with more than two decimal places',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            SalesComponent,
+          );
+
+        const component =
+          fixture.componentInstance;
+
+        const http =
+          TestBed.inject(
+            HttpTestingController,
+          );
+
+        const initialRequests =
+          http.match(() => true);
+
+        for (
+          const request
+          of initialRequests
+        ) {
+          request.flush([]);
+        }
+
+        http.verify();
+
+        const unitPrice =
+          component.items
+            .at(0)
+            .controls
+            .unitPrice;
+
+        unitPrice.setValue(
+          10.01,
+        );
+
+        expect(
+          unitPrice.valid,
+        ).toBe(true);
+
+        unitPrice.setValue(
+          10.001,
+        );
+
+        expect(
+          unitPrice.hasError(
+            'decimalPrecision',
+          ),
+        ).toBe(true);
+
+        expect(
+          unitPrice.invalid,
+        ).toBe(true);
+      },
+    );
+
   },
 );

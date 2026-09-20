@@ -13,6 +13,10 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+
+import {
+  decimalPrecisionValidator,
+} from '../../shared/validators/decimal-precision.validator';
 import {
   catchError,
   finalize,
@@ -401,6 +405,7 @@ export class SalesComponent {
         [
           Validators.required,
           Validators.min(0.001),
+          decimalPrecisionValidator(3),
         ],
       ],
 
@@ -409,6 +414,7 @@ export class SalesComponent {
         [
           Validators.required,
           Validators.min(0),
+          decimalPrecisionValidator(2),
         ],
       ],
     });
