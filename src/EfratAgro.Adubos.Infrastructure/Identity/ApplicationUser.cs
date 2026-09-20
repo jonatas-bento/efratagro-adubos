@@ -5,4 +5,8 @@ namespace EfratAgro.Adubos.Infrastructure.Identity;
 public sealed class ApplicationUser
     : IdentityUser<Guid>
 {
+    public ApplicationUser()
+    {
+        LockoutEnabled = true;
+    }
 }

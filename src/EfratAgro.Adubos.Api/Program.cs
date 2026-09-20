@@ -7,6 +7,7 @@ using EfratAgro.Adubos.Application.Finance;
 using EfratAgro.Adubos.Application.Purchases;
 using EfratAgro.Adubos.Application.Sales;
 using EfratAgro.Adubos.Infrastructure;
+using EfratAgro.Adubos.Infrastructure.Identity;
 
 var builder =
     WebApplication.CreateBuilder(args);
@@ -22,6 +23,41 @@ builder.Services.AddEfratAgroAuthentication(
 var app =
     builder.Build();
 
+
+
+if (app.Configuration.GetValue<bool>(
+        "BootstrapAdmin:Enabled"))
+{
+    var adminEmail =
+        app.Configuration[
+            "BootstrapAdmin:Email"];
+
+    var adminPassword =
+        app.Configuration[
+            "BootstrapAdmin:Password"];
+
+    if (string.IsNullOrWhiteSpace(
+            adminEmail) ||
+        string.IsNullOrWhiteSpace(
+            adminPassword))
+    {
+        throw new InvalidOperationException(
+            "Bootstrap admin credentials were not configured.");
+    }
+
+    await using var scope =
+        app.Services.CreateAsyncScope();
+
+    var bootstrapper =
+        scope.ServiceProvider
+            .GetRequiredService<
+                IIdentityBootstrapper>();
+
+    await bootstrapper.BootstrapAsync(
+        adminEmail,
+        adminPassword);
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -31,6 +67,8 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapEfratAgroAuthenticationEndpoints();
 
 app.MapGet(
     "/health",
