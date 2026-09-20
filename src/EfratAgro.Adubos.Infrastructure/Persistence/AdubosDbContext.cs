@@ -5,12 +5,15 @@ using EfratAgro.Adubos.Domain.Inventory;
 using EfratAgro.Adubos.Domain.Legacy;
 using EfratAgro.Adubos.Domain.Purchases;
 using EfratAgro.Adubos.Domain.Sales;
+using EfratAgro.Adubos.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace EfratAgro.Adubos.Infrastructure.Persistence;
 
 public sealed class AdubosDbContext
-    : DbContext
+    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
 {
     public AdubosDbContext(
         DbContextOptions<AdubosDbContext> options)

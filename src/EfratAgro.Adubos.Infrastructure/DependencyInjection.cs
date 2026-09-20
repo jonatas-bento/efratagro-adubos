@@ -10,9 +10,11 @@ using EfratAgro.Adubos.Infrastructure.Customers;
 using EfratAgro.Adubos.Infrastructure.Deliveries;
 using EfratAgro.Adubos.Infrastructure.Inventory;
 using EfratAgro.Adubos.Infrastructure.Finance;
+using EfratAgro.Adubos.Infrastructure.Identity;
 using EfratAgro.Adubos.Infrastructure.Persistence;
 using EfratAgro.Adubos.Infrastructure.Purchases;
 using EfratAgro.Adubos.Infrastructure.Sales;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,6 +40,26 @@ public static class DependencyInjection
                 options.UseMySQL(
                     connectionString);
             });
+
+        services
+            .AddIdentityCore<ApplicationUser>(
+                options =>
+                {
+                    options.Password.RequiredLength = 8;
+                    options.Password.RequireDigit = true;
+                    options.Password.RequireLowercase = true;
+                    options.Password.RequireUppercase = true;
+                    options.Password.RequireNonAlphanumeric = false;
+
+                    options.Lockout.AllowedForNewUsers = true;
+                    options.Lockout.MaxFailedAccessAttempts = 5;
+                    options.Lockout.DefaultLockoutTimeSpan =
+                        TimeSpan.FromMinutes(15);
+
+                    options.User.RequireUniqueEmail = true;
+                })
+            .AddRoles<IdentityRole<Guid>>()
+            .AddEntityFrameworkStores<AdubosDbContext>();
 
         services.AddScoped<
             IInventoryQueryService,
