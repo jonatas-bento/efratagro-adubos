@@ -85,12 +85,16 @@ public sealed class ReceivableQueryService
                             receivable.OriginalAmount -
                             paid);
 
-                    var status =
+                    var statusCode =
                         CalculateStatus(
                             receivable.DueDate,
                             paid,
                             outstanding,
                             today);
+
+                    var status =
+                        GetStatusLabel(
+                            statusCode);
 
                     return new ReceivableDto(
                         receivable.Id,
@@ -102,6 +106,7 @@ public sealed class ReceivableQueryService
                         receivable.OriginalAmount,
                         paid,
                         outstanding,
+                        statusCode,
                         status);
                 })
                 .ToList();
@@ -148,7 +153,7 @@ public sealed class ReceivableQueryService
             items);
     }
 
-    private static string CalculateStatus(
+    private static ReceivableStatus CalculateStatus(
         DateTime dueDate,
         decimal paid,
         decimal outstanding,
@@ -156,21 +161,49 @@ public sealed class ReceivableQueryService
     {
         if (outstanding <= 0m)
         {
-            return "Pago";
+            return ReceivableStatus.Paid;
         }
 
         if (dueDate.Date < today)
         {
             return paid > 0
-                ? "Parcial em atraso"
-                : "Vencido";
+                ? ReceivableStatus.PartialOverdue
+                : ReceivableStatus.Overdue;
         }
 
         if (paid > 0)
         {
-            return "Parcial";
+            return ReceivableStatus.Partial;
         }
 
-        return "Pendente";
+        return ReceivableStatus.Pending;
+    }
+
+    private static string GetStatusLabel(
+        ReceivableStatus status)
+    {
+        return status switch
+        {
+            ReceivableStatus.Pending =>
+                "Pendente",
+
+            ReceivableStatus.Partial =>
+                "Parcial",
+
+            ReceivableStatus.Overdue =>
+                "Vencido",
+
+            ReceivableStatus.PartialOverdue =>
+                "Parcial em atraso",
+
+            ReceivableStatus.Paid =>
+                "Pago",
+
+            _ =>
+                throw new ArgumentOutOfRangeException(
+                    nameof(status),
+                    status,
+                    "Status financeiro inválido.")
+        };
     }
 }

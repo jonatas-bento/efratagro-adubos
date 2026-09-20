@@ -10,4 +10,5 @@ public sealed record ReceivableDto(
     decimal OriginalAmount,
     decimal PaidAmount,
     decimal OutstandingAmount,
+    ReceivableStatus StatusCode,
     string Status);

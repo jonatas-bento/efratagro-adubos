@@ -36,6 +36,7 @@ registerLocaleData(
 import {
   PaymentMethod,
   Receivable,
+  ReceivableStatusCode,
 } from './finance-models';
 
 describe(
@@ -107,6 +108,8 @@ describe(
           originalAmount: 100,
           paidAmount: 0,
           outstandingAmount: 100,
+          statusCode:
+            ReceivableStatusCode.Pending,
           status: 'Pendente',
         };
 
@@ -149,6 +152,93 @@ describe(
         http.expectNone(
           '/api/receivables/receivable-1/payments',
         );
+
+        http.verify();
+      },
+    );
+
+    it(
+      'uses a stable status code for visual state instead of the display label',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            FinanceComponent,
+          );
+
+        const http =
+          TestBed.inject(
+            HttpTestingController,
+          );
+
+        const request =
+          http.expectOne(
+            candidate =>
+              candidate.url ===
+                '/api/receivables' &&
+              candidate.params.get(
+                'openOnly',
+              ) === 'true',
+          );
+
+        request.flush({
+          summary: {
+            totalScheduled: 100,
+            totalReceived: 0,
+            totalOutstanding: 100,
+            totalOverdue: 100,
+            openInstallments: 1,
+            overdueInstallments: 1,
+          },
+          items: [
+            {
+              id: 'receivable-overdue',
+              saleId: 'sale-overdue',
+              customerId: 'customer-overdue',
+              customerName: 'CLIENTE TESTE',
+              installmentNumber: 1,
+              dueDate:
+                '2026-09-01T00:00:00Z',
+              originalAmount: 100,
+              paidAmount: 0,
+              outstandingAmount: 100,
+
+              // Contrato novo que queremos:
+              // 3 = Overdue.
+              statusCode:
+                ReceivableStatusCode.Overdue,
+
+              // Texto propositalmente diferente.
+              // A aparência NÃO deve depender dele.
+              status: 'ATRASADO',
+            },
+          ],
+        });
+
+        fixture.detectChanges();
+
+        const status =
+          fixture.nativeElement
+            .querySelector(
+              '.status',
+            ) as HTMLElement;
+
+        expect(
+          status.textContent?.trim(),
+        ).toBe(
+          'ATRASADO',
+        );
+
+        expect(
+          status.classList.contains(
+            'overdue',
+          ),
+        ).toBe(true);
+
+        expect(
+          status.classList.contains(
+            'paid',
+          ),
+        ).toBe(false);
 
         http.verify();
       },

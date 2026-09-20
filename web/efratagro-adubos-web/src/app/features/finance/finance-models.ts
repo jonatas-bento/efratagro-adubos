@@ -8,6 +8,14 @@ export enum PaymentMethod {
   Other = 99,
 }
 
+export enum ReceivableStatusCode {
+  Pending = 1,
+  Partial = 2,
+  Overdue = 3,
+  PartialOverdue = 4,
+  Paid = 5,
+}
+
 export interface Receivable {
   id: string;
   saleId: string;
@@ -18,6 +26,7 @@ export interface Receivable {
   originalAmount: number;
   paidAmount: number;
   outstandingAmount: number;
+  statusCode: ReceivableStatusCode;
   status: string;
 }
 

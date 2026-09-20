@@ -21,6 +21,7 @@ import {
 import {
   PaymentMethod,
   Receivable,
+  ReceivableStatusCode,
   ReceivablesResult,
 } from './finance-models';
 import {
@@ -47,6 +48,9 @@ export class FinanceComponent {
 
   readonly paymentMethods =
     PaymentMethod;
+
+  readonly receivableStatuses =
+    ReceivableStatusCode;
 
   readonly data =
     signal<ReceivablesResult | null>(

@@ -117,11 +117,14 @@
                 <span
                   class="status"
                   [class.overdue]="
-                    item.status === 'Vencido' ||
-                    item.status === 'Parcial em atraso'
+                    item.statusCode ===
+                      receivableStatuses.Overdue ||
+                    item.statusCode ===
+                      receivableStatuses.PartialOverdue
                   "
                   [class.paid]="
-                    item.status === 'Pago'
+                    item.statusCode ===
+                      receivableStatuses.Paid
                   "
                 >
                   {{ item.status }}
