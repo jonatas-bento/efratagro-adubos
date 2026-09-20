@@ -50,3 +50,38 @@ export interface RegisterPaymentRequest {
   reference: string | null;
   notes: string | null;
 }
+
+
+export interface PaymentReversalHistory {
+  id: string;
+  reversedByUserId: string;
+  reversedByUserEmail: string | null;
+  reason: string;
+  reversedAtUtc: string;
+}
+
+export interface PaymentHistoryItem {
+  id: string;
+  receivableId: string;
+  amount: number;
+  paidAtUtc: string;
+  method: PaymentMethod;
+  reference: string | null;
+  notes: string | null;
+  reversal: PaymentReversalHistory | null;
+}
+
+export interface ReversePaymentRequest {
+  reason: string;
+}
+
+export interface ReversePaymentResult {
+  reversalId: string;
+  paymentId: string;
+  receivableId: string;
+  reversedAmount: number;
+  totalPaid: number;
+  outstandingAmount: number;
+  reversedAtUtc: string;
+  reversedByUserId: string;
+}

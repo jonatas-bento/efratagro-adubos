@@ -348,6 +348,21 @@ app.MapGet(
     .WithTags("Finance")
     .RequireAuthorization(AuthorizationPolicies.Management);
 
+app.MapGet(
+    "/api/receivables/{receivableId:guid}/payments",
+    async (
+        Guid receivableId,
+        IPaymentQueryService paymentQueries,
+        CancellationToken cancellationToken) =>
+        Results.Ok(
+            await paymentQueries
+                .GetByReceivableAsync(
+                    receivableId,
+                    cancellationToken)))
+    .WithTags("Finance")
+    .RequireAuthorization(
+        AuthorizationPolicies.Management);
+
 app.MapPost(
     "/api/receivables/{receivableId:guid}/payments",
     async (

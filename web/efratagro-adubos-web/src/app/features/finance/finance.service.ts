@@ -9,10 +9,12 @@ import {
 import {
   Observable,
 } from 'rxjs';
-
 import {
+  PaymentHistoryItem,
   ReceivablesResult,
   RegisterPaymentRequest,
+  ReversePaymentRequest,
+  ReversePaymentResult,
 } from './finance-models';
 
 @Injectable({
@@ -44,6 +46,28 @@ export class FinanceService {
   ): Observable<unknown> {
     return this.http.post(
       `/api/receivables/${receivableId}/payments`,
+      request,
+    );
+  }
+
+  getPayments(
+    receivableId: string,
+  ): Observable<PaymentHistoryItem[]> {
+    return this.http.get<
+      PaymentHistoryItem[]
+    >(
+      `/api/receivables/${receivableId}/payments`,
+    );
+  }
+
+  reversePayment(
+    paymentId: string,
+    request: ReversePaymentRequest,
+  ): Observable<ReversePaymentResult> {
+    return this.http.post<
+      ReversePaymentResult
+    >(
+      `/api/payments/${paymentId}/reversal`,
       request,
     );
   }

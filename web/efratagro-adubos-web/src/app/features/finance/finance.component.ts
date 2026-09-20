@@ -19,6 +19,7 @@ import {
 } from 'rxjs';
 
 import {
+  PaymentHistoryItem,
   PaymentMethod,
   Receivable,
   ReceivableStatusCode,
@@ -69,6 +70,23 @@ export class FinanceComponent {
   readonly selected =
     signal<Receivable | null>(null);
 
+  readonly historyReceivable =
+    signal<Receivable | null>(null);
+
+  readonly paymentHistory =
+    signal<PaymentHistoryItem[]>([]);
+
+  readonly historyLoading =
+    signal(false);
+
+  readonly reversalTarget =
+    signal<PaymentHistoryItem | null>(
+      null,
+    );
+
+  readonly reversing =
+    signal(false);
+
   readonly error =
     signal<string | null>(null);
 
@@ -92,6 +110,17 @@ export class FinanceComponent {
 
       reference: [''],
       notes: [''],
+    });
+
+  readonly reversalForm =
+    this.fb.group({
+      reason: [
+        '',
+        [
+          Validators.required,
+          Validators.maxLength(500),
+        ],
+      ],
     });
 
   constructor() {
@@ -193,6 +222,198 @@ export class FinanceComponent {
 
         this.closePayment();
         this.load();
+      });
+  }
+
+  openHistory(
+    receivable: Receivable,
+  ): void {
+    this.historyReceivable.set(
+      receivable,
+    );
+
+    this.paymentHistory.set([]);
+
+    this.loadPaymentHistory();
+  }
+
+  closeHistory(): void {
+    if (this.reversalTarget()) {
+      return;
+    }
+
+    this.historyReceivable.set(null);
+
+    this.paymentHistory.set([]);
+  }
+
+  openReversal(
+    payment: PaymentHistoryItem,
+  ): void {
+    if (payment.reversal) {
+      return;
+    }
+
+    this.reversalTarget.set(
+      payment,
+    );
+
+    this.reversalForm.reset({
+      reason: '',
+    });
+  }
+
+  closeReversal(): void {
+    if (this.reversing()) {
+      return;
+    }
+
+    this.reversalTarget.set(null);
+
+    this.reversalForm.reset({
+      reason: '',
+    });
+  }
+
+  reversePayment(): void {
+    const payment =
+      this.reversalTarget();
+
+    if (
+      !payment ||
+      this.reversalForm.invalid
+    ) {
+      this.reversalForm.markAllAsTouched();
+
+      return;
+    }
+
+    const reason =
+      this.reversalForm
+        .getRawValue()
+        .reason
+        .trim();
+
+    if (!reason) {
+      this.reversalForm
+        .controls
+        .reason
+        .setErrors({
+          required: true,
+        });
+
+      return;
+    }
+
+    this.error.set(null);
+    this.success.set(null);
+    this.reversing.set(true);
+
+    this.financeService
+      .reversePayment(
+        payment.id,
+        {
+          reason,
+        },
+      )
+      .pipe(
+        catchError(response => {
+          this.error.set(
+            response?.error?.error ??
+            'Não foi possível estornar o recebimento.',
+          );
+
+          return of(null);
+        }),
+        finalize(() =>
+          this.reversing.set(
+            false,
+          ),
+        ),
+      )
+      .subscribe(result => {
+        if (!result) {
+          return;
+        }
+
+        this.success.set(
+          'Recebimento estornado com sucesso.',
+        );
+
+        this.reversalTarget.set(null);
+
+        this.reversalForm.reset({
+          reason: '',
+        });
+
+        this.loadPaymentHistory();
+
+        this.load();
+      });
+  }
+
+  paymentMethodLabel(
+    method: PaymentMethod,
+  ): string {
+    switch (method) {
+      case PaymentMethod.Pix:
+        return 'Pix';
+
+      case PaymentMethod.Cash:
+        return 'Dinheiro';
+
+      case PaymentMethod.Card:
+        return 'Cartão';
+
+      case PaymentMethod.BankTransfer:
+        return 'Transferência';
+
+      case PaymentMethod.Boleto:
+        return 'Boleto';
+
+      case PaymentMethod.Check:
+        return 'Cheque';
+
+      case PaymentMethod.Other:
+        return 'Outro';
+
+      default:
+        return 'Não informado';
+    }
+  }
+
+  private loadPaymentHistory(): void {
+    const receivable =
+      this.historyReceivable();
+
+    if (!receivable) {
+      return;
+    }
+
+    this.historyLoading.set(true);
+
+    this.financeService
+      .getPayments(
+        receivable.id,
+      )
+      .pipe(
+        catchError(() => {
+          this.error.set(
+            'Não foi possível carregar o histórico de recebimentos.',
+          );
+
+          return of([]);
+        }),
+        finalize(() =>
+          this.historyLoading.set(
+            false,
+          ),
+        ),
+      )
+      .subscribe(payments => {
+        this.paymentHistory.set(
+          payments,
+        );
       });
   }
 

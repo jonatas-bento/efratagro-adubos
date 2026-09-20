@@ -188,7 +188,15 @@
                   Registrar recebimento
                 </button>
               }
-            </article>
+                          <button
+                type="button"
+                class="history-button"
+                (click)="openHistory(item)"
+              >
+                Histórico de recebimentos
+              </button>
+
+</article>
           }
         </div>
       }
@@ -329,4 +337,273 @@
       </section>
     </div>
   }
+
+  @if (
+    historyReceivable();
+    as receivable
+  ) {
+    <div
+      class="modal-backdrop"
+      (click)="closeHistory()"
+    >
+      <section
+        class="payment-modal history-modal"
+        (click)="$event.stopPropagation()"
+      >
+        <button
+          type="button"
+          class="close-button"
+          (click)="closeHistory()"
+        >
+          ×
+        </button>
+
+        <span class="eyebrow">
+          Histórico financeiro
+        </span>
+
+        <h2>
+          {{ receivable.customerName }}
+        </h2>
+
+        <p class="history-subtitle">
+          Parcela
+          {{ receivable.installmentNumber }}
+          · vencimento
+          {{
+            receivable.dueDate
+              | date:'dd/MM/yyyy'
+          }}
+        </p>
+
+        @if (historyLoading()) {
+          <div class="history-empty">
+            Carregando recebimentos...
+          </div>
+        } @else if (
+          paymentHistory().length === 0
+        ) {
+          <div class="history-empty">
+            Nenhum recebimento foi
+            registrado nesta parcela.
+          </div>
+        } @else {
+          <div class="payment-history-list">
+            @for (
+              payment of paymentHistory();
+              track payment.id
+            ) {
+              <article
+                class="payment-history-card"
+                [class.reversed]="
+                  payment.reversal !== null
+                "
+              >
+                <div class="payment-history-header">
+                  <div>
+                    <span class="payment-caption">
+                      Recebimento
+                    </span>
+
+                    <strong>
+                      {{
+                        payment.amount
+                          | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+                      }}
+                    </strong>
+                  </div>
+
+                  <span
+                    class="payment-state"
+                    [class.reversed]="
+                      payment.reversal !== null
+                    "
+                  >
+                    {{
+                      payment.reversal
+                        ? 'Estornado'
+                        : 'Ativo'
+                    }}
+                  </span>
+                </div>
+
+                <div class="payment-meta">
+                  <span>
+                    {{
+                      payment.paidAtUtc
+                        | date:'dd/MM/yyyy HH:mm'
+                    }}
+                  </span>
+
+                  <span>
+                    {{
+                      paymentMethodLabel(
+                        payment.method
+                      )
+                    }}
+                  </span>
+                </div>
+
+                @if (payment.reference) {
+                  <div class="payment-detail">
+                    <span>Referência</span>
+
+                    <strong>
+                      {{ payment.reference }}
+                    </strong>
+                  </div>
+                }
+
+                @if (payment.notes) {
+                  <div class="payment-detail">
+                    <span>Observação</span>
+
+                    <p>
+                      {{ payment.notes }}
+                    </p>
+                  </div>
+                }
+
+                @if (
+                  payment.reversal;
+                  as reversal
+                ) {
+                  <div class="reversal-audit">
+                    <strong>
+                      Estorno registrado
+                    </strong>
+
+                    <p>
+                      {{ reversal.reason }}
+                    </p>
+
+                    <small>
+                      {{
+                        reversal.reversedAtUtc
+                          | date:'dd/MM/yyyy HH:mm'
+                      }}
+                      ·
+                      {{
+                        reversal.reversedByUserEmail
+                          || reversal.reversedByUserId
+                      }}
+                    </small>
+                  </div>
+                } @else {
+                  <button
+                    type="button"
+                    class="danger-button"
+                    (click)="openReversal(payment)"
+                  >
+                    Estornar recebimento
+                  </button>
+                }
+              </article>
+            }
+          </div>
+        }
+      </section>
+    </div>
+  }
+
+  @if (
+    reversalTarget();
+    as payment
+  ) {
+    <div
+      class="modal-backdrop reversal-backdrop"
+      (click)="closeReversal()"
+    >
+      <section
+        class="payment-modal reversal-modal"
+        (click)="$event.stopPropagation()"
+      >
+        <button
+          type="button"
+          class="close-button"
+          [disabled]="reversing()"
+          (click)="closeReversal()"
+        >
+          ×
+        </button>
+
+        <span class="eyebrow danger-eyebrow">
+          Estorno financeiro
+        </span>
+
+        <h2>
+          Estornar recebimento
+        </h2>
+
+        <div class="reversal-warning">
+          <strong>
+            {{
+              payment.amount
+                | currency:'BRL':'symbol':'1.2-2':'pt-BR'
+            }}
+          </strong>
+
+          <p>
+            O recebimento original será
+            preservado no histórico e
+            marcado como estornado.
+          </p>
+        </div>
+
+        <form
+          [formGroup]="reversalForm"
+          (ngSubmit)="reversePayment()"
+        >
+          <label>
+            <span>
+              Motivo do estorno
+            </span>
+
+            <textarea
+              formControlName="reason"
+              maxlength="500"
+              rows="4"
+              placeholder="Ex.: lançamento duplicado, valor registrado incorretamente..."
+            ></textarea>
+          </label>
+
+          @if (
+            reversalForm.controls.reason.touched &&
+            reversalForm.controls.reason.invalid
+          ) {
+            <small class="field-error">
+              Informe o motivo do estorno.
+            </small>
+          }
+
+          <div class="modal-actions">
+            <button
+              type="button"
+              class="secondary-button"
+              [disabled]="reversing()"
+              (click)="closeReversal()"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              class="danger-button danger-primary"
+              [disabled]="
+                reversing() ||
+                reversalForm.invalid
+              "
+            >
+              {{
+                reversing()
+                  ? 'Estornando...'
+                  : 'Confirmar estorno'
+              }}
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  }
+
 </main>

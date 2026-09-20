@@ -1,0 +1,243 @@
+/* PAYMENT HISTORY / REVERSAL */
+
+.history-button {
+  min-height: 2.55rem;
+  padding: 0 0.9rem;
+  border: 1px solid var(--brand-border);
+  border-radius: 0.7rem;
+  background: var(--brand-surface-soft);
+  color: var(--brand-primary-dark);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.history-button:hover {
+  border-color: rgb(25 136 111 / 0.3);
+  background: rgb(25 136 111 / 0.08);
+}
+
+.history-modal {
+  width: min(92vw, 720px);
+  max-height: 86vh;
+  overflow-y: auto;
+}
+
+.history-subtitle {
+  margin: 0.4rem 0 1.35rem;
+  color: var(--brand-muted);
+}
+
+.history-empty {
+  padding: 2rem 1rem;
+  border: 1px dashed var(--brand-border);
+  border-radius: 0.85rem;
+  color: var(--brand-muted);
+  text-align: center;
+}
+
+.payment-history-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.payment-history-card {
+  padding: 1rem;
+  border: 1px solid var(--brand-border);
+  border-radius: 0.9rem;
+  background: var(--brand-surface);
+}
+
+.payment-history-card.reversed {
+  background: rgb(254 59 0 / 0.035);
+}
+
+.payment-history-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.payment-history-header > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.payment-history-header strong {
+  color: var(--brand-ink);
+  font-size: 1.2rem;
+}
+
+.payment-caption {
+  color: var(--brand-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.payment-state {
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  background: rgb(25 136 111 / 0.1);
+  color: var(--brand-primary-dark);
+  font-size: 0.7rem;
+  font-weight: 850;
+}
+
+.payment-state.reversed {
+  background: rgb(254 59 0 / 0.09);
+  color: #a52b08;
+}
+
+.payment-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin-top: 0.7rem;
+  color: var(--brand-muted);
+  font-size: 0.77rem;
+}
+
+.payment-detail {
+  margin-top: 0.8rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--brand-border);
+}
+
+.payment-detail span {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--brand-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.payment-detail strong,
+.payment-detail p {
+  margin: 0;
+  color: var(--brand-ink);
+  font-size: 0.82rem;
+}
+
+.reversal-audit {
+  margin-top: 0.9rem;
+  padding: 0.8rem;
+  border: 1px solid rgb(254 59 0 / 0.14);
+  border-radius: 0.75rem;
+  background: rgb(254 59 0 / 0.055);
+}
+
+.reversal-audit strong {
+  color: #a52b08;
+  font-size: 0.78rem;
+}
+
+.reversal-audit p {
+  margin: 0.35rem 0;
+  color: var(--brand-ink);
+  font-size: 0.82rem;
+}
+
+.reversal-audit small {
+  color: var(--brand-muted);
+}
+
+.danger-button {
+  min-height: 2.55rem;
+  margin-top: 0.85rem;
+  padding: 0 0.9rem;
+  border: 1px solid rgb(254 59 0 / 0.22);
+  border-radius: 0.7rem;
+  background: rgb(254 59 0 / 0.06);
+  color: #a52b08;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.danger-button:hover:not(:disabled) {
+  background: rgb(254 59 0 / 0.11);
+}
+
+.danger-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.reversal-backdrop {
+  z-index: 120;
+}
+
+.reversal-modal {
+  width: min(92vw, 520px);
+}
+
+.danger-eyebrow {
+  color: #a52b08;
+}
+
+.reversal-warning {
+  margin: 1rem 0 1.2rem;
+  padding: 1rem;
+  border: 1px solid rgb(254 59 0 / 0.14);
+  border-radius: 0.8rem;
+  background: rgb(254 59 0 / 0.055);
+}
+
+.reversal-warning strong {
+  color: #a52b08;
+  font-size: 1.25rem;
+}
+
+.reversal-warning p {
+  margin: 0.4rem 0 0;
+  color: var(--brand-muted);
+  line-height: 1.45;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.modal-actions .danger-button,
+.modal-actions .secondary-button {
+  margin-top: 0;
+}
+
+.danger-primary {
+  background: #a52b08;
+  color: white;
+}
+
+.danger-primary:hover:not(:disabled) {
+  background: #842105;
+}
+
+.field-error {
+  display: block;
+  margin-top: -0.45rem;
+  color: #a52b08;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+@media (max-width: 620px) {
+  .payment-history-header {
+    flex-direction: column;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+}

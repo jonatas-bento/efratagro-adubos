@@ -110,6 +110,10 @@ public static class DependencyInjection
             ReceivableQueryService>();
 
         services.AddScoped<
+            IPaymentQueryService,
+            PaymentQueryService>();
+
+        services.AddScoped<
             IPaymentService,
             PaymentService>();
 
