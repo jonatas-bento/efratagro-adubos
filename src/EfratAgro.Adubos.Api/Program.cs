@@ -1,3 +1,4 @@
+using EfratAgro.Adubos.Api.Authentication;
 using EfratAgro.Adubos.Application.Catalog;
 using EfratAgro.Adubos.Application.Customers;
 using EfratAgro.Adubos.Application.Deliveries;
@@ -15,6 +16,9 @@ builder.Services.AddOpenApi();
 builder.Services.AddInfrastructure(
     builder.Configuration);
 
+builder.Services.AddEfratAgroAuthentication(
+    builder.Configuration);
+
 var app =
     builder.Build();
 
@@ -24,6 +28,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapGet(
     "/health",
