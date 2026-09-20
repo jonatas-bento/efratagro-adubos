@@ -15,6 +15,7 @@ import {
 } from 'rxjs';
 
 import {
+  DeliveryStatusCode,
   DeliverySummary,
 } from './delivery-models';
 import {
@@ -34,6 +35,9 @@ import {
 export class DeliveriesComponent {
   private readonly deliveriesService =
     inject(DeliveriesService);
+
+  readonly deliveryStatuses =
+    DeliveryStatusCode;
 
   readonly deliveries =
     signal<DeliverySummary[]>([]);
@@ -59,7 +63,7 @@ export class DeliveriesComponent {
         this.deliveries()
           .filter(
             delivery =>
-              delivery.status === 'Pendente',
+              delivery.statusCode === this.deliveryStatuses.Pending,
           )
           .length,
     );
@@ -70,7 +74,7 @@ export class DeliveriesComponent {
         this.deliveries()
           .filter(
             delivery =>
-              delivery.status === 'Entregue',
+              delivery.statusCode === this.deliveryStatuses.Delivered,
           )
           .length,
     );

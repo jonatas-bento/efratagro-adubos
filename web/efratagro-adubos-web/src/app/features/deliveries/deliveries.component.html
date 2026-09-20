@@ -133,7 +133,7 @@
             <div class="delivery-main">
               <div class="customer">
                 <span class="status-badge"
-                  [class.delivered]="delivery.status === 'Entregue'"
+                  [class.delivered]="delivery.statusCode === deliveryStatuses.Delivered"
                 >
                   {{ delivery.status }}
                 </span>
@@ -189,7 +189,7 @@
             </div>
 
             @if (
-              delivery.status === 'Pendente'
+              delivery.statusCode === deliveryStatuses.Pending
             ) {
               <button
                 type="button"
@@ -207,7 +207,7 @@
                 }}
               </button>
             } @else if (
-              delivery.status === 'Entregue'
+              delivery.statusCode === deliveryStatuses.Delivered
             ) {
               <div class="completed-label">
                 Entrega concluída ✓

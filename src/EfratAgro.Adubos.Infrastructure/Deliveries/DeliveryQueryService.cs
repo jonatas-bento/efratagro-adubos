@@ -108,6 +108,8 @@ public sealed class DeliveryQueryService
                             sale.Id),
                         MethodLabel(
                             sale.DeliveryMethod),
+                        ToStatusCode(
+                            sale.DeliveryStatus),
                         StatusLabel(
                             sale.DeliveryStatus),
                         AsUtc(
@@ -157,6 +159,22 @@ public sealed class DeliveryQueryService
 
             _ =>
                 "Não informado"
+        };
+    }
+
+    private static DeliveryStatusCode ToStatusCode(
+        DeliveryStatus status)
+    {
+        return status switch
+        {
+            DeliveryStatus.Pending =>
+                DeliveryStatusCode.Pending,
+            DeliveryStatus.Delivered =>
+                DeliveryStatusCode.Delivered,
+            DeliveryStatus.NotTracked =>
+                DeliveryStatusCode.NotTracked,
+            _ =>
+                DeliveryStatusCode.Unspecified
         };
     }
 

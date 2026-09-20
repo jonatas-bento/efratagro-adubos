@@ -6,5 +6,6 @@ public sealed record DeliverySummaryDto(
     DateTime OccurredAtUtc,
     decimal TotalQuantity,
     string Method,
+    DeliveryStatusCode StatusCode,
     string Status,
     DateTime? DeliveredAtUtc);
