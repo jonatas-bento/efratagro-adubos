@@ -62,6 +62,10 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<AdubosDbContext>();
 
         services.AddScoped<
+            IIdentityBootstrapper,
+            IdentityBootstrapper>();
+
+        services.AddScoped<
             IInventoryQueryService,
             InventoryQueryService>();
 
