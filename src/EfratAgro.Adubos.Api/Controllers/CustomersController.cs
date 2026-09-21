@@ -31,32 +31,62 @@ public sealed class CustomersController
     public async Task<IActionResult> Get(
         [FromQuery] string? q,
         [FromQuery] int? take,
+        [FromQuery] DateOnly? from,
+        [FromQuery] DateOnly? to,
         CancellationToken cancellationToken)
     {
-        var result =
-            await _queries
-                .GetAsync(
-                    q,
-                    take ?? 100,
-                    cancellationToken);
+        try
+        {
+            var result =
+                await _queries
+                    .GetAsync(
+                        q,
+                        take ?? 100,
+                        from,
+                        to,
+                        cancellationToken);
 
-        return Ok(result);
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(
+                new
+                {
+                    error = ex.Message
+                });
+        }
     }
 
     [HttpGet("{customerId:guid}")]
     public async Task<IActionResult> GetById(
         Guid customerId,
+        [FromQuery] DateOnly? from,
+        [FromQuery] DateOnly? to,
         CancellationToken cancellationToken)
     {
-        var customer =
-            await _queries
-                .GetByIdAsync(
-                    customerId,
-                    cancellationToken);
+        try
+        {
+            var customer =
+                await _queries
+                    .GetByIdAsync(
+                        customerId,
+                        from,
+                        to,
+                        cancellationToken);
 
-        return customer is null
-            ? NotFound()
-            : Ok(customer);
+            return customer is null
+                ? NotFound()
+                : Ok(customer);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(
+                new
+                {
+                    error = ex.Message
+                });
+        }
     }
 
     [HttpPost]

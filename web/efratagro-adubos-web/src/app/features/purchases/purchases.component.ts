@@ -1,4 +1,8 @@
 import {
+  DataQualityBannerComponent,
+} from '../../shared/data-quality/data-quality-banner.component';
+
+import {
   ChangeDetectionStrategy,
   Component,
   inject,
@@ -24,6 +28,14 @@ import {
 } from 'rxjs';
 
 import {
+  PagedResult,
+} from '../../core/models/paged-result';
+import {
+  TemporalPeriod,
+  TemporalPeriodFilterComponent,
+} from '../../shared/temporal/temporal-period-filter.component';
+
+import {
   InventoryItem,
 } from '../inventory/inventory-item';
 import {
@@ -44,7 +56,9 @@ import {
   standalone: true,
   imports: [
     CommonModule,
+    DataQualityBannerComponent,
     ReactiveFormsModule,
+    TemporalPeriodFilterComponent,
   ],
   templateUrl: './purchases.component.html',
   styleUrl: './purchases.component.scss',
@@ -68,6 +82,24 @@ export class PurchasesComponent {
 
   readonly recentPurchases =
     signal<PurchaseSummary[]>([]);
+
+  readonly historyFrom =
+    signal('');
+
+  readonly historyTo =
+    signal('');
+
+  readonly historyPage =
+    signal(1);
+
+  readonly historyTotalPages =
+    signal(0);
+
+  readonly historyTotalItems =
+    signal(0);
+
+  readonly historyLoading =
+    signal(false);
 
   readonly loading =
     signal(true);
@@ -237,6 +269,113 @@ export class PurchasesComponent {
       });
   }
 
+  onHistoryPeriodChange(
+    period: TemporalPeriod,
+  ): void {
+    this.historyFrom.set(
+      period.from,
+    );
+
+    this.historyTo.set(
+      period.to,
+    );
+
+    this.loadPurchasesHistory(1);
+  }
+
+  hasHistoryPeriod(): boolean {
+    return Boolean(
+      this.historyFrom() ||
+      this.historyTo(),
+    );
+  }
+
+  previousHistoryPage(): void {
+    if (
+      this.historyPage() <= 1
+    ) {
+      return;
+    }
+
+    this.loadPurchasesHistory(
+      this.historyPage() - 1,
+    );
+  }
+
+  nextHistoryPage(): void {
+    if (
+      this.historyPage() >=
+      this.historyTotalPages()
+    ) {
+      return;
+    }
+
+    this.loadPurchasesHistory(
+      this.historyPage() + 1,
+    );
+  }
+
+  private loadPurchasesHistory(
+    page: number,
+  ): void {
+    this.historyLoading.set(true);
+    this.error.set(null);
+
+    this.purchasesService
+      .getPurchasesPage({
+        page,
+        pageSize: 20,
+        from:
+          this.historyFrom() ||
+          undefined,
+        to:
+          this.historyTo() ||
+          undefined,
+      })
+      .pipe(
+        catchError(response => {
+          this.error.set(
+            response?.error?.error ??
+            'Não foi possível carregar o histórico de compras.',
+          );
+
+          return of(null);
+        }),
+        finalize(() =>
+          this.historyLoading.set(false),
+        ),
+      )
+      .subscribe(result => {
+        if (!result) {
+          return;
+        }
+
+        this.applyPurchasesPage(
+          result,
+        );
+      });
+  }
+
+  private applyPurchasesPage(
+    result: PagedResult<PurchaseSummary>,
+  ): void {
+    this.recentPurchases.set(
+      result.items,
+    );
+
+    this.historyPage.set(
+      result.page,
+    );
+
+    this.historyTotalPages.set(
+      result.totalPages,
+    );
+
+    this.historyTotalItems.set(
+      result.totalItems,
+    );
+  }
+
   private createItemGroup() {
     return this.fb.group({
       productId: [
@@ -279,7 +418,16 @@ export class PurchasesComponent {
 
       purchases:
         this.purchasesService
-          .getRecentPurchases(),
+          .getPurchasesPage({
+            page: 1,
+            pageSize: 20,
+            from:
+              this.historyFrom() ||
+              undefined,
+            to:
+              this.historyTo() ||
+              undefined,
+          }),
     })
       .pipe(
         catchError(() => {
@@ -306,7 +454,7 @@ export class PurchasesComponent {
           data.suppliers,
         );
 
-        this.recentPurchases.set(
+        this.applyPurchasesPage(
           data.purchases,
         );
       });

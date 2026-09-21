@@ -25,14 +25,31 @@ public sealed class InventoryController
     [HttpGet]
     public async Task<IActionResult> Get(
         [FromQuery] string? q,
+        [FromQuery] DateOnly? asOf,
         CancellationToken cancellationToken)
     {
-        var result =
-            await _inventory
-                .GetInventoryAsync(
-                    q,
-                    cancellationToken);
+        try
+        {
+            var result =
+                await _inventory
+                    .GetInventoryAsync(
+                        q,
+                        asOf,
+                        cancellationToken);
 
-        return Ok(result);
+            return Ok(result);
+        }
+        catch (
+            Exception ex)
+            when (
+                ex is ArgumentException or
+                InvalidOperationException)
+        {
+            return BadRequest(
+                new
+                {
+                    error = ex.Message
+                });
+        }
     }
 }

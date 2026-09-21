@@ -29,16 +29,42 @@ public sealed class SalesController
 
     [HttpGet]
     public async Task<IActionResult> Get(
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
         [FromQuery] int? take,
+        [FromQuery] DateOnly? from,
+        [FromQuery] DateOnly? to,
         CancellationToken cancellationToken)
     {
-        var result =
-            await _queries
-                .GetRecentAsync(
-                    take ?? 20,
-                    cancellationToken);
+        try
+        {
+            var effectivePage =
+                page ?? 1;
 
-        return Ok(result);
+            var effectivePageSize =
+                pageSize ??
+                take ??
+                20;
+
+            var result =
+                await _queries
+                    .GetPageAsync(
+                        effectivePage,
+                        effectivePageSize,
+                        from,
+                        to,
+                        cancellationToken);
+
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(
+                new
+                {
+                    error = ex.Message
+                });
+        }
     }
 
     [HttpPost]

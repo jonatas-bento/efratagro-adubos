@@ -353,3 +353,27 @@ select:focus {
       repeat(auto-fit, minmax(9rem, 1fr));
   }
 }
+
+.temporal-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-top: 1rem;
+  padding-top: .85rem;
+  border-top: 1px solid rgba(0, 0, 0, .08);
+  font-size: .8rem;
+}
+
+.temporal-pagination button {
+  padding: .5rem .75rem;
+  border: 1px solid rgba(0, 0, 0, .12);
+  border-radius: .55rem;
+  background: transparent;
+  cursor: pointer;
+}
+
+.temporal-pagination button:disabled {
+  cursor: default;
+  opacity: .4;
+}

@@ -15,6 +15,15 @@
     </p>
   </header>
 
+  <app-data-quality-banner
+    context="inventory"
+    [asOf]="asOf()"
+  />
+  <app-temporal-as-of-filter
+    [value]="asOf()"
+    (dateChange)="onAsOfChange($event)"
+  />
+
   <section
     class="summary"
     aria-label="Resumo do estoque"
