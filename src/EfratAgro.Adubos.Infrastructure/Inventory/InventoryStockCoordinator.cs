@@ -109,7 +109,7 @@ internal static class InventoryStockCoordinator
         return products;
     }
 
-    public static async Task<
+    public static Task<
         IReadOnlyDictionary<
             Guid,
             ProductStockAvailability>>
@@ -118,14 +118,47 @@ internal static class InventoryStockCoordinator
             IEnumerable<Guid> productIds,
             CancellationToken cancellationToken)
     {
+        return GetAvailabilityAsync(
+            dbContext,
+            productIds,
+            asOfExclusiveUtc: null,
+            cancellationToken);
+    }
+
+    public static async Task<
+        IReadOnlyDictionary<
+            Guid,
+            ProductStockAvailability>>
+        GetAvailabilityAsync(
+            AdubosDbContext dbContext,
+            IEnumerable<Guid> productIds,
+            DateTime? asOfExclusiveUtc,
+            CancellationToken cancellationToken)
+    {
         var ids =
             productIds
                 .Distinct()
                 .ToHashSet();
 
-        var movementRows =
-            await dbContext.InventoryMovements
+        var movementQuery =
+            dbContext.InventoryMovements
                 .AsNoTracking()
+                .AsQueryable();
+
+        if (asOfExclusiveUtc.HasValue)
+        {
+            var cutoffUtc =
+                asOfExclusiveUtc.Value;
+
+            movementQuery =
+                movementQuery.Where(
+                    x =>
+                        x.OccurredAtUtc <
+                        cutoffUtc);
+        }
+
+        var movementRows =
+            await movementQuery
                 .Select(
                     x => new
                     {
@@ -135,13 +168,38 @@ internal static class InventoryStockCoordinator
                 .ToListAsync(
                     cancellationToken);
 
-        var reservationRows =
-            await dbContext.InventoryReservations
+        var reservationQuery =
+            dbContext.InventoryReservations
                 .AsNoTracking()
-                .Where(
+                .AsQueryable();
+
+        if (asOfExclusiveUtc.HasValue)
+        {
+            var cutoffUtc =
+                asOfExclusiveUtc.Value;
+
+            reservationQuery =
+                reservationQuery.Where(
+                    x =>
+                        x.ReservedAtUtc <
+                            cutoffUtc &&
+                        (
+                            x.FulfilledAtUtc == null ||
+                            x.FulfilledAtUtc >=
+                                cutoffUtc
+                        ));
+        }
+        else
+        {
+            reservationQuery =
+                reservationQuery.Where(
                     x =>
                         x.Status ==
-                        InventoryReservationStatus.Active)
+                        InventoryReservationStatus.Active);
+        }
+
+        var reservationRows =
+            await reservationQuery
                 .Select(
                     x => new
                     {

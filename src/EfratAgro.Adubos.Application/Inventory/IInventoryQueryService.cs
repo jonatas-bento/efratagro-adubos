@@ -4,5 +4,6 @@ public interface IInventoryQueryService
 {
     Task<IReadOnlyList<InventoryItemDto>> GetInventoryAsync(
         string? search,
+        DateOnly? asOf = null,
         CancellationToken cancellationToken = default);
 }

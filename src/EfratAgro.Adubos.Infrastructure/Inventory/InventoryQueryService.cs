@@ -1,3 +1,5 @@
+using EfratAgro.Adubos.Infrastructure.Common;
+using EfratAgro.Adubos.Domain.Inventory;
 using EfratAgro.Adubos.Application.Inventory;
 using EfratAgro.Adubos.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +20,7 @@ public sealed class InventoryQueryService
     public async Task<IReadOnlyList<InventoryItemDto>>
         GetInventoryAsync(
             string? search,
+            DateOnly? asOf = null,
             CancellationToken cancellationToken = default)
     {
         var productsQuery =
@@ -62,11 +65,54 @@ public sealed class InventoryQueryService
                     x => x.Id)
                 .ToArray();
 
+        DateTime? asOfExclusiveUtc =
+            null;
+
+        if (asOf.HasValue)
+        {
+            var baselineAtUtc =
+                await _dbContext
+                    .InventoryMovements
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            x.Type ==
+                            InventoryMovementType.OpeningBalance)
+                    .MinAsync(
+                        x =>
+                            (DateTime?)
+                            x.OccurredAtUtc,
+                        cancellationToken);
+
+            if (baselineAtUtc.HasValue)
+            {
+                var baselineDate =
+                    BusinessDate.ToLocalDate(
+                        baselineAtUtc.Value);
+
+                if (
+                    asOf.Value <
+                    baselineDate)
+                {
+                    throw new InvalidOperationException(
+                        "O histórico físico do estoque está " +
+                        $"disponível a partir de {baselineDate:dd/MM/yyyy}. " +
+                        "Datas anteriores pertencem ao período legado " +
+                        "sem baseline físico reconstruível.");
+                }
+            }
+
+            asOfExclusiveUtc =
+                BusinessDate.ExclusiveEndUtc(
+                    asOf.Value);
+        }
+
         var availabilityByProduct =
             await InventoryStockCoordinator
                 .GetAvailabilityAsync(
                     _dbContext,
                     productIds,
+                    asOfExclusiveUtc,
                     cancellationToken);
 
         return products
