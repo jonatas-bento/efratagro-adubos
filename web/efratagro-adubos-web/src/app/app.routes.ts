@@ -32,6 +32,10 @@ import {
   SalesComponent,
 } from './features/sales/sales.component';
 
+import {
+  UsersComponent,
+} from './features/users/users.component';
+
 export const routes: Routes = [
   {
     path: 'login',
@@ -99,6 +103,20 @@ export const routes: Routes = [
       authGuard,
     ],
     title: 'Entregas | EfratAgro',
+  },
+  {
+    path: 'usuarios',
+    component: UsersComponent,
+    canActivate: [
+      authGuard,
+      roleGuard,
+    ],
+    data: {
+      roles: [
+        applicationRoles.admin,
+      ],
+    },
+    title: 'Usuários | EfratAgro',
   },
   {
     path: '',

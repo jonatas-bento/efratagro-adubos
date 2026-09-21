@@ -1,0 +1,409 @@
+<main class="page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">
+        Administração
+      </span>
+
+      <h1>Usuários</h1>
+
+      <p>
+        Gerencie quem pode acessar o EfratAgro
+        e quais áreas cada pessoa pode utilizar.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="primary-button"
+      (click)="openCreate()"
+    >
+      + Novo usuário
+    </button>
+  </header>
+
+  @if (success()) {
+    <div class="message success">
+      {{ success() }}
+    </div>
+  }
+
+  @if (error()) {
+    <div class="message error">
+      {{ error() }}
+    </div>
+  }
+
+  <section class="summary-grid">
+    <article>
+      <span>Usuários</span>
+      <strong>
+        {{ totalUsers() }}
+      </strong>
+      <small>cadastrados</small>
+    </article>
+
+    <article>
+      <span>Ativos</span>
+      <strong>
+        {{ activeUsers() }}
+      </strong>
+      <small>com acesso permitido</small>
+    </article>
+
+    <article>
+      <span>Bloqueados</span>
+      <strong>
+        {{ lockedUsers() }}
+      </strong>
+      <small>por tentativas de login</small>
+    </article>
+  </section>
+
+  <section class="users-panel">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">
+          Acessos
+        </span>
+
+        <h2>Usuários do sistema</h2>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="empty-state">
+        Carregando usuários...
+      </div>
+    } @else if (
+      users().length === 0
+    ) {
+      <div class="empty-state">
+        Nenhum usuário cadastrado.
+      </div>
+    } @else {
+      <div class="user-list">
+        @for (
+          user of users();
+          track user.id
+        ) {
+          <article class="user-row">
+            <div class="identity">
+              <strong>
+                {{ user.displayName }}
+
+                @if (
+                  isCurrentUser(user)
+                ) {
+                  <span class="you">
+                    Você
+                  </span>
+                }
+              </strong>
+
+              <span>
+                {{ user.email }}
+              </span>
+            </div>
+
+            <div class="role">
+              <span>Perfil</span>
+
+              <strong>
+                {{
+                  roleLabel(
+                    user.role
+                  )
+                }}
+              </strong>
+            </div>
+
+            <div class="status">
+              <span
+                class="badge"
+                [class.inactive]="
+                  !user.isActive
+                "
+              >
+                {{
+                  user.isActive
+                    ? 'Ativo'
+                    : 'Inativo'
+                }}
+              </span>
+
+              @if (
+                user.isLockedOut
+              ) {
+                <span
+                  class="badge locked"
+                >
+                  Bloqueado
+                </span>
+              }
+            </div>
+
+            <div class="actions">
+              @if (
+                user.isLockedOut
+              ) {
+                <button
+                  type="button"
+                  class="secondary-button"
+                  (click)="unlock(user)"
+                >
+                  Desbloquear
+                </button>
+              }
+
+              <button
+                type="button"
+                class="secondary-button"
+                (click)="
+                  openReset(user)
+                "
+              >
+                Redefinir senha
+              </button>
+
+              <button
+                type="button"
+                class="primary-button compact"
+                (click)="
+                  openEdit(user)
+                "
+              >
+                Editar
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+
+  @if (editorOpen()) {
+    <div
+      class="modal-backdrop"
+      (click)="closeEditor()"
+    >
+      <section
+        class="modal"
+        (click)="$event.stopPropagation()"
+      >
+        <button
+          type="button"
+          class="close-button"
+          [disabled]="saving()"
+          (click)="closeEditor()"
+        >
+          ×
+        </button>
+
+        <span class="eyebrow">
+          Administração
+        </span>
+
+        <h2>
+          {{
+            editing()
+              ? 'Editar usuário'
+              : 'Novo usuário'
+          }}
+        </h2>
+
+        <form
+          [formGroup]="editorForm"
+          (ngSubmit)="saveUser()"
+        >
+          <label>
+            <span>Nome</span>
+
+            <input
+              type="text"
+              formControlName="displayName"
+              maxlength="120"
+              placeholder="Nome do usuário"
+            />
+          </label>
+
+          <label>
+            <span>Email</span>
+
+            <input
+              type="email"
+              formControlName="email"
+              placeholder="usuario@empresa.com"
+            />
+          </label>
+
+          <label>
+            <span>Perfil</span>
+
+            <select
+              formControlName="role"
+            >
+              @for (
+                role of roles;
+                track role
+              ) {
+                <option
+                  [value]="role"
+                >
+                  {{ roleLabel(role) }}
+                </option>
+              }
+            </select>
+          </label>
+
+          @if (!editing()) {
+            <label>
+              <span>Senha inicial</span>
+
+              <input
+                type="password"
+                formControlName="password"
+                autocomplete="new-password"
+                placeholder="Mínimo de 8 caracteres"
+              />
+            </label>
+          }
+
+          @if (editing()) {
+            <label class="toggle">
+              <input
+                type="checkbox"
+                formControlName="isActive"
+              />
+
+              <span>
+                Usuário ativo
+              </span>
+            </label>
+          }
+
+          <div class="modal-actions">
+            <button
+              type="button"
+              class="secondary-button"
+              [disabled]="saving()"
+              (click)="closeEditor()"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              class="primary-button"
+              [disabled]="
+                saving() ||
+                editorForm.invalid
+              "
+            >
+              {{
+                saving()
+                  ? 'Salvando...'
+                  : 'Salvar usuário'
+              }}
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  }
+
+  @if (
+    resetTarget();
+    as user
+  ) {
+    <div
+      class="modal-backdrop"
+      (click)="closeReset()"
+    >
+      <section
+        class="modal"
+        (click)="$event.stopPropagation()"
+      >
+        <button
+          type="button"
+          class="close-button"
+          [disabled]="saving()"
+          (click)="closeReset()"
+        >
+          ×
+        </button>
+
+        <span class="eyebrow">
+          Segurança
+        </span>
+
+        <h2>
+          Redefinir senha
+        </h2>
+
+        <p class="modal-copy">
+          {{ user.displayName }}
+          ·
+          {{ user.email }}
+        </p>
+
+        <form
+          [formGroup]="resetForm"
+          (ngSubmit)="resetPassword()"
+        >
+          <label>
+            <span>Nova senha</span>
+
+            <input
+              type="password"
+              formControlName="newPassword"
+              autocomplete="new-password"
+            />
+          </label>
+
+          <label>
+            <span>Confirmar senha</span>
+
+            <input
+              type="password"
+              formControlName="confirmPassword"
+              autocomplete="new-password"
+            />
+          </label>
+
+          @if (
+            resetForm.controls
+              .confirmPassword
+              .hasError('mismatch')
+          ) {
+            <small class="field-error">
+              As senhas precisam ser iguais.
+            </small>
+          }
+
+          <div class="modal-actions">
+            <button
+              type="button"
+              class="secondary-button"
+              [disabled]="saving()"
+              (click)="closeReset()"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              class="primary-button"
+              [disabled]="
+                saving() ||
+                resetForm.invalid
+              "
+            >
+              Redefinir senha
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  }
+</main>

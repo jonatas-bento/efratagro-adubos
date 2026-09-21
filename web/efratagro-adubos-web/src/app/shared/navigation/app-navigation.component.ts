@@ -77,6 +77,13 @@ export class AppNavigationComponent {
         label: 'Entregas',
         route: '/entregas',
       },
+      {
+        label: 'Usuários',
+        route: '/usuarios',
+        roles: [
+          applicationRoles.admin,
+        ],
+      },
     ];
 
   readonly visibleItems =

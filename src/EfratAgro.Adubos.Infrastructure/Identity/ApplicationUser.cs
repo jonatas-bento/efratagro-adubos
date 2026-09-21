@@ -8,5 +8,10 @@ public sealed class ApplicationUser
     public ApplicationUser()
     {
         LockoutEnabled = true;
+        IsActive = true;
     }
+
+    public string? DisplayName { get; set; }
+
+    public bool IsActive { get; set; }
 }

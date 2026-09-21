@@ -59,6 +59,11 @@ public sealed class AuthenticationController
             return InvalidCredentials();
         }
 
+        if (!user.IsActive)
+        {
+            return InvalidCredentials();
+        }
+
         if (
             await _userManager
                 .IsLockedOutAsync(

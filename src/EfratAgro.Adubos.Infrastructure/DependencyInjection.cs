@@ -1,3 +1,4 @@
+using EfratAgro.Adubos.Application.Users;
 using EfratAgro.Adubos.Application.Catalog;
 using EfratAgro.Adubos.Application.Customers;
 using EfratAgro.Adubos.Application.Deliveries;
@@ -116,6 +117,10 @@ public static class DependencyInjection
         services.AddScoped<
             IPaymentService,
             PaymentService>();
+
+        services.AddScoped<
+            IUserManagementService,
+            UserManagementService>();
 
         return services;
     }

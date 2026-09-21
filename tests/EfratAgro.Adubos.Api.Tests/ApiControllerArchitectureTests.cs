@@ -1,6 +1,7 @@
 using System.Reflection;
 using EfratAgro.Adubos.Api.Authentication;
 using EfratAgro.Adubos.Api.Controllers;
+using EfratAgro.Adubos.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,7 +24,8 @@ public sealed class ApiControllerArchitectureTests
                 typeof(DeliveriesController),
                 typeof(CustomersController),
                 typeof(ReceivablesController),
-                typeof(PaymentsController)
+                typeof(PaymentsController),
+                typeof(UsersController)
             };
 
         Assert.All(
@@ -139,6 +141,21 @@ public sealed class ApiControllerArchitectureTests
         AssertPolicy(
             typeof(PaymentsController),
             AuthorizationPolicies.Management);
+    }
+
+    [Fact]
+    public void UsersController_ShouldRequireAdminRole()
+    {
+        var authorize =
+            typeof(UsersController)
+                .GetCustomAttribute<
+                    AuthorizeAttribute>();
+
+        Assert.NotNull(authorize);
+
+        Assert.Equal(
+            ApplicationRoles.Admin,
+            authorize.Roles);
     }
 
     private static void AssertPolicy(
