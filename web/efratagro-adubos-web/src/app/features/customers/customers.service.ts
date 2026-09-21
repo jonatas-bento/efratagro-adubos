@@ -16,6 +16,11 @@ import {
   CustomerListItem,
 } from './customer-models';
 
+export interface CustomerTemporalQuery {
+  from?: string;
+  to?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -26,16 +31,36 @@ export class CustomersService {
   getCustomers(
     search = '',
     take = 100,
+    period: CustomerTemporalQuery = {},
   ): Observable<CustomerListItem[]> {
     let params =
       new HttpParams()
-        .set('take', take);
+        .set(
+          'take',
+          take,
+        );
 
     if (search.trim()) {
       params =
         params.set(
           'q',
           search.trim(),
+        );
+    }
+
+    if (period.from) {
+      params =
+        params.set(
+          'from',
+          period.from,
+        );
+    }
+
+    if (period.to) {
+      params =
+        params.set(
+          'to',
+          period.to,
         );
     }
 
@@ -47,9 +72,30 @@ export class CustomersService {
 
   getCustomer(
     id: string,
+    period: CustomerTemporalQuery = {},
   ): Observable<CustomerDetails> {
+    let params =
+      new HttpParams();
+
+    if (period.from) {
+      params =
+        params.set(
+          'from',
+          period.from,
+        );
+    }
+
+    if (period.to) {
+      params =
+        params.set(
+          'to',
+          period.to,
+        );
+    }
+
     return this.http.get<CustomerDetails>(
       `/api/customers/${id}`,
+      { params },
     );
   }
 

@@ -1,6 +1,6 @@
 using EfratAgro.Adubos.Application.Customers;
-using EfratAgro.Adubos.Infrastructure.Common;
 using EfratAgro.Adubos.Domain.Sales;
+using EfratAgro.Adubos.Infrastructure.Common;
 using EfratAgro.Adubos.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,25 +17,61 @@ public sealed class CustomerQueryService
         _dbContext = dbContext;
     }
 
-    public async Task<IReadOnlyList<CustomerListItemDto>>
-        GetAsync(
-            string? search,
-            int take,
-            CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<CustomerListItemDto>> GetAsync(
+        string? search,
+        int take,
+        CancellationToken cancellationToken = default)
     {
+        return GetAsync(
+            search,
+            take,
+            from: null,
+            to: null,
+            cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<CustomerListItemDto>> GetAsync(
+        string? search,
+        int take,
+        DateOnly? from,
+        DateOnly? to,
+        CancellationToken cancellationToken = default)
+    {
+        BusinessDate.ValidateRange(
+            from,
+            to);
+
+        DateTime? fromUtc =
+            from.HasValue
+                ? BusinessDate.StartOfDayUtc(
+                    from.Value)
+                : null;
+
+        DateTime? toExclusiveUtc =
+            to.HasValue
+                ? BusinessDate.ExclusiveEndUtc(
+                    to.Value)
+                : null;
+
         var limit =
-            Math.Clamp(take, 1, 1000);
+            Math.Clamp(
+                take,
+                1,
+                1000);
 
         var query =
             _dbContext.Customers
                 .AsNoTracking()
-                .Where(x => x.IsActive);
+                .Where(
+                    x => x.IsActive);
 
         if (!string.IsNullOrWhiteSpace(search))
         {
+            var trimmed =
+                search.Trim();
+
             var normalized =
-                search.Trim()
-                    .ToUpperInvariant();
+                trimmed.ToUpperInvariant();
 
             query =
                 query.Where(
@@ -44,13 +80,15 @@ public sealed class CustomerQueryService
                             normalized) ||
                         (
                             x.Phone != null &&
-                            x.Phone.Contains(search.Trim())
+                            x.Phone.Contains(
+                                trimmed)
                         ));
         }
 
         var customers =
             await query
-                .OrderBy(x => x.Name)
+                .OrderBy(
+                    x => x.Name)
                 .Take(limit)
                 .Select(x => new
                 {
@@ -61,7 +99,12 @@ public sealed class CustomerQueryService
                 .ToListAsync(
                     cancellationToken);
 
-        var sales =
+        if (customers.Count == 0)
+        {
+            return [];
+        }
+
+        var allSales =
             await _dbContext.Sales
                 .AsNoTracking()
                 .Select(x => new
@@ -101,7 +144,9 @@ public sealed class CustomerQueryService
 
         var payments =
             await _dbContext.Payments
-                .Where(x => x.Reversal == null)
+                .Where(
+                    x =>
+                        x.Reversal == null)
                 .AsNoTracking()
                 .Select(x => new
                 {
@@ -113,10 +158,13 @@ public sealed class CustomerQueryService
 
         var paymentTotals =
             payments
-                .GroupBy(x => x.ReceivableId)
+                .GroupBy(
+                    x => x.ReceivableId)
                 .ToDictionary(
                     x => x.Key,
-                    x => x.Sum(y => y.Amount));
+                    x =>
+                        x.Sum(
+                            y => y.Amount));
 
         var today =
             BusinessDate.Today;
@@ -124,38 +172,70 @@ public sealed class CustomerQueryService
         return customers
             .Select(customer =>
             {
-                var customerSales =
-                    sales
+                /*
+                 * Duas visões deliberadamente diferentes:
+                 *
+                 * allCustomerSales
+                 *   = posição financeira atual.
+                 *
+                 * commercialSales
+                 *   = atividade comercial no período.
+                 */
+                var allCustomerSales =
+                    allSales
                         .Where(
                             x =>
                                 x.CustomerId ==
                                 customer.Id)
                         .ToList();
 
-                var saleIds =
-                    customerSales
-                        .Select(x => x.Id)
+                var commercialSales =
+                    allCustomerSales
+                        .Where(
+                            x =>
+                                IsInPeriod(
+                                    x.OccurredAtUtc,
+                                    fromUtc,
+                                    toExclusiveUtc))
+                        .ToList();
+
+                var commercialSaleIds =
+                    commercialSales
+                        .Select(
+                            x => x.Id)
                         .ToHashSet();
 
-                var customerItems =
+                var allCustomerSaleIds =
+                    allCustomerSales
+                        .Select(
+                            x => x.Id)
+                        .ToHashSet();
+
+                var commercialItems =
                     saleItems
                         .Where(
                             x =>
-                                saleIds.Contains(
-                                    x.SaleId))
+                                commercialSaleIds
+                                    .Contains(
+                                        x.SaleId))
                         .ToList();
 
+                /*
+                 * Financeiro permanece all-time/current.
+                 */
                 var customerReceivables =
                     receivables
                         .Where(
                             x =>
-                                saleIds.Contains(
-                                    x.SaleId))
+                                allCustomerSaleIds
+                                    .Contains(
+                                        x.SaleId))
                         .ToList();
 
                 var receivableSaleIds =
                     customerReceivables
-                        .Select(x => x.SaleId)
+                        .Select(
+                            x => x.SaleId)
                         .ToHashSet();
 
                 decimal received = 0m;
@@ -177,15 +257,19 @@ public sealed class CustomerQueryService
                             receivable.OriginalAmount -
                             paid);
 
-                    received += paid;
-                    outstanding += balance;
+                    received +=
+                        paid;
+
+                    outstanding +=
+                        balance;
 
                     if (
-                        balance > 0 &&
+                        balance > 0m &&
                         receivable.DueDate.Date <
                         today)
                     {
-                        overdue += balance;
+                        overdue +=
+                            balance;
                     }
                 }
 
@@ -193,16 +277,18 @@ public sealed class CustomerQueryService
                     customer.Id,
                     customer.Name,
                     customer.Phone,
-                    customerSales.Count,
-                    customerItems.Sum(
+                    commercialSales.Count,
+                    commercialItems.Sum(
                         x =>
                             x.Quantity *
                             x.UnitPrice),
-                    customerItems.Sum(
-                        x => x.Quantity),
-                    customerSales
+                    commercialItems.Sum(
+                        x =>
+                            x.Quantity),
+                    commercialSales
                         .OrderByDescending(
-                            x => x.OccurredAtUtc)
+                            x =>
+                                x.OccurredAtUtc)
                         .Select(
                             x =>
                                 (DateTime?)
@@ -211,7 +297,7 @@ public sealed class CustomerQueryService
                     received,
                     outstanding,
                     overdue,
-                    customerSales.Count(
+                    allCustomerSales.Count(
                         x =>
                             x.Origin ==
                                 SaleOrigin.Operational &&
@@ -221,17 +307,46 @@ public sealed class CustomerQueryService
             .ToList();
     }
 
-    public async Task<CustomerDetailsDto?>
-        GetByIdAsync(
-            Guid customerId,
-            CancellationToken cancellationToken = default)
+    public Task<CustomerDetailsDto?> GetByIdAsync(
+        Guid customerId,
+        CancellationToken cancellationToken = default)
     {
+        return GetByIdAsync(
+            customerId,
+            from: null,
+            to: null,
+            cancellationToken);
+    }
+
+    public async Task<CustomerDetailsDto?> GetByIdAsync(
+        Guid customerId,
+        DateOnly? from,
+        DateOnly? to,
+        CancellationToken cancellationToken = default)
+    {
+        BusinessDate.ValidateRange(
+            from,
+            to);
+
+        DateTime? fromUtc =
+            from.HasValue
+                ? BusinessDate.StartOfDayUtc(
+                    from.Value)
+                : null;
+
+        DateTime? toExclusiveUtc =
+            to.HasValue
+                ? BusinessDate.ExclusiveEndUtc(
+                    to.Value)
+                : null;
+
         var customer =
             await _dbContext.Customers
                 .AsNoTracking()
                 .Where(
                     x =>
-                        x.Id == customerId &&
+                        x.Id ==
+                            customerId &&
                         x.IsActive)
                 .Select(x => new
                 {
@@ -247,7 +362,12 @@ public sealed class CustomerQueryService
             return null;
         }
 
-        var sales =
+        /*
+         * Carregamos todas as vendas deste cliente.
+         * Depois separamos atividade comercial do
+         * período e posição financeira atual.
+         */
+        var allSales =
             await _dbContext.Sales
                 .AsNoTracking()
                 .Where(
@@ -255,7 +375,10 @@ public sealed class CustomerQueryService
                         x.CustomerId ==
                         customerId)
                 .OrderByDescending(
-                    x => x.OccurredAtUtc)
+                    x =>
+                        x.OccurredAtUtc)
+                .ThenByDescending(
+                    x => x.Id)
                 .Select(x => new
                 {
                     x.Id,
@@ -264,6 +387,28 @@ public sealed class CustomerQueryService
                 })
                 .ToListAsync(
                     cancellationToken);
+
+        var commercialSales =
+            allSales
+                .Where(
+                    x =>
+                        IsInPeriod(
+                            x.OccurredAtUtc,
+                            fromUtc,
+                            toExclusiveUtc))
+                .ToList();
+
+        var allSaleIds =
+            allSales
+                .Select(
+                    x => x.Id)
+                .ToHashSet();
+
+        var commercialSaleIds =
+            commercialSales
+                .Select(
+                    x => x.Id)
+                .ToHashSet();
 
         var allItems =
             await _dbContext.SaleItems
@@ -280,19 +425,19 @@ public sealed class CustomerQueryService
                 .ToListAsync(
                     cancellationToken);
 
-        var saleIds =
-            sales
-                .Select(x => x.Id)
-                .ToHashSet();
-
-        var items =
+        var commercialItems =
             allItems
                 .Where(
                     x =>
-                        saleIds.Contains(
-                            x.SaleId))
+                        commercialSaleIds
+                            .Contains(
+                                x.SaleId))
                 .ToList();
 
+        /*
+         * Recebíveis usam TODAS as vendas do cliente,
+         * não somente as vendas do período.
+         */
         var allReceivables =
             await _dbContext.Receivables
                 .AsNoTracking()
@@ -310,18 +455,21 @@ public sealed class CustomerQueryService
             allReceivables
                 .Where(
                     x =>
-                        saleIds.Contains(
+                        allSaleIds.Contains(
                             x.SaleId))
                 .ToList();
 
         var receivableIds =
             receivables
-                .Select(x => x.Id)
+                .Select(
+                    x => x.Id)
                 .ToHashSet();
 
         var allPayments =
             await _dbContext.Payments
-                .Where(x => x.Reversal == null)
+                .Where(
+                    x =>
+                        x.Reversal == null)
                 .AsNoTracking()
                 .Select(x => new
                 {
@@ -341,14 +489,18 @@ public sealed class CustomerQueryService
 
         var paymentTotals =
             payments
-                .GroupBy(x => x.ReceivableId)
+                .GroupBy(
+                    x => x.ReceivableId)
                 .ToDictionary(
                     x => x.Key,
-                    x => x.Sum(y => y.Amount));
+                    x =>
+                        x.Sum(
+                            y => y.Amount));
 
         var receivableSaleIds =
             receivables
-                .Select(x => x.SaleId)
+                .Select(
+                    x => x.SaleId)
                 .ToHashSet();
 
         var today =
@@ -376,26 +528,31 @@ public sealed class CustomerQueryService
                     receivable.OriginalAmount -
                     paid);
 
-            totalReceived += paid;
-            outstanding += balance;
+            totalReceived +=
+                paid;
 
-            if (balance > 0)
+            outstanding +=
+                balance;
+
+            if (balance > 0m)
             {
                 openInstallments++;
             }
 
             if (
-                balance > 0 &&
+                balance > 0m &&
                 receivable.DueDate.Date <
                 today)
             {
-                overdue += balance;
+                overdue +=
+                    balance;
+
                 overdueInstallments++;
             }
         }
 
         var products =
-            items
+            commercialItems
                 .GroupBy(
                     x => new
                     {
@@ -407,21 +564,23 @@ public sealed class CustomerQueryService
                         group.Key.ProductId,
                         group.Key.ProductName,
                         group.Sum(
-                            x => x.Quantity),
+                            x =>
+                                x.Quantity),
                         group.Sum(
                             x =>
                                 x.Quantity *
                                 x.UnitPrice)))
                 .OrderByDescending(
-                    x => x.TotalQuantity)
+                    x =>
+                        x.TotalQuantity)
                 .ToList();
 
         var purchases =
-            sales
+            commercialSales
                 .Select(sale =>
                 {
                     var saleItems =
-                        items
+                        commercialItems
                             .Where(
                                 x =>
                                     x.SaleId ==
@@ -433,11 +592,12 @@ public sealed class CustomerQueryService
                         sale.OccurredAtUtc,
                         sale.Origin ==
                             SaleOrigin.Legacy
-                            ? "Legado"
-                            : "EfratAgro",
+                                ? "Legado"
+                                : "EfratAgro",
                         saleItems.Count,
                         saleItems.Sum(
-                            x => x.Quantity),
+                            x =>
+                                x.Quantity),
                         saleItems.Sum(
                             x =>
                                 x.Quantity *
@@ -459,14 +619,15 @@ public sealed class CustomerQueryService
             customer.Id,
             customer.Name,
             customer.Phone,
-            sales.Count,
-            items.Sum(
+            commercialSales.Count,
+            commercialItems.Sum(
                 x =>
                     x.Quantity *
                     x.UnitPrice),
-            items.Sum(
-                x => x.Quantity),
-            sales
+            commercialItems.Sum(
+                x =>
+                    x.Quantity),
+            commercialSales
                 .Select(
                     x =>
                         (DateTime?)
@@ -474,13 +635,14 @@ public sealed class CustomerQueryService
                 .FirstOrDefault(),
             new CustomerFinancialSummaryDto(
                 receivables.Sum(
-                    x => x.OriginalAmount),
+                    x =>
+                        x.OriginalAmount),
                 totalReceived,
                 outstanding,
                 overdue,
                 openInstallments,
                 overdueInstallments,
-                sales.Count(
+                allSales.Count(
                     x =>
                         x.Origin ==
                             SaleOrigin.Operational &&
@@ -488,5 +650,29 @@ public sealed class CustomerQueryService
                             x.Id))),
             products,
             purchases);
+    }
+
+    private static bool IsInPeriod(
+        DateTime occurredAtUtc,
+        DateTime? fromUtc,
+        DateTime? toExclusiveUtc)
+    {
+        if (
+            fromUtc.HasValue &&
+            occurredAtUtc <
+            fromUtc.Value)
+        {
+            return false;
+        }
+
+        if (
+            toExclusiveUtc.HasValue &&
+            occurredAtUtc >=
+            toExclusiveUtc.Value)
+        {
+            return false;
+        }
+
+        return true;
     }
 }
