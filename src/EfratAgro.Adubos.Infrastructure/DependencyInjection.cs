@@ -1,3 +1,5 @@
+using EfratAgro.Adubos.Application.DataQuality;
+using EfratAgro.Adubos.Infrastructure.DataQuality;
 using EfratAgro.Adubos.Application.Users;
 using EfratAgro.Adubos.Application.Catalog;
 using EfratAgro.Adubos.Application.Customers;
@@ -121,6 +123,8 @@ public static class DependencyInjection
         services.AddScoped<
             IUserManagementService,
             UserManagementService>();
+
+        services.AddScoped<IDataQualityService, DataQualityService>();
 
         return services;
     }
