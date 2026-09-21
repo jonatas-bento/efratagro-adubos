@@ -13,4 +13,8 @@ public sealed record CreateSaleResult(
     DeliveryMethod DeliveryMethod,
     DeliveryStatus DeliveryStatus,
     int Receivables,
-    decimal ScheduledAmount);
+    decimal ScheduledAmount)
+{
+    public SaleStockMode StockMode { get; init; } =
+        SaleStockMode.Immediate;
+}

@@ -56,32 +56,39 @@ public sealed class InventoryQueryService
             return [];
         }
 
-        var stockRows =
-            await _dbContext.InventoryMovements
-                .AsNoTracking()
-                .GroupBy(x => x.ProductId)
-                .Select(group => new
-                {
-                    ProductId = group.Key,
-                    Quantity = group.Sum(x => x.Quantity)
-                })
-                .ToListAsync(cancellationToken);
+        var productIds =
+            products
+                .Select(
+                    x => x.Id)
+                .ToArray();
 
-        var stockByProduct =
-            stockRows.ToDictionary(
-                x => x.ProductId,
-                x => x.Quantity);
+        var availabilityByProduct =
+            await InventoryStockCoordinator
+                .GetAvailabilityAsync(
+                    _dbContext,
+                    productIds,
+                    cancellationToken);
 
         return products
             .Select(product =>
-                new InventoryItemDto(
+            {
+                var availability =
+                    availabilityByProduct[
+                        product.Id];
+
+                return new InventoryItemDto(
                     product.Id,
                     product.ProductName,
                     product.SupplierName,
                     product.IsActive,
-                    stockByProduct.GetValueOrDefault(
-                        product.Id,
-                        0m)))
+                    availability.PhysicalQuantity)
+                {
+                    ReservedQuantity =
+                        availability.ReservedQuantity,
+                    AvailableQuantity =
+                        availability.AvailableQuantity
+                };
+            })
             .ToList();
     }
 }

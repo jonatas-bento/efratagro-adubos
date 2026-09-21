@@ -2,6 +2,7 @@ using EfratAgro.Adubos.Application.Sales;
 using EfratAgro.Adubos.Domain.Finance;
 using EfratAgro.Adubos.Domain.Inventory;
 using EfratAgro.Adubos.Domain.Sales;
+using EfratAgro.Adubos.Infrastructure.Inventory;
 using EfratAgro.Adubos.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,6 +27,16 @@ public sealed class SaleService
         {
             throw new ArgumentException(
                 "Informe o cliente.");
+        }
+
+        if (
+            request.StockMode !=
+                SaleStockMode.Immediate &&
+            request.StockMode !=
+                SaleStockMode.Reserved)
+        {
+            throw new ArgumentException(
+                "Informe o comportamento de estoque da venda.");
         }
 
         if (request.Items is null ||
@@ -155,67 +166,57 @@ public sealed class SaleService
                 await _dbContext.Customers
                     .SingleOrDefaultAsync(
                         x =>
-                            x.Id == request.CustomerId &&
+                            x.Id ==
+                                request.CustomerId &&
                             x.IsActive,
                         cancellationToken)
                 ?? throw new InvalidOperationException(
                     "Cliente não encontrado.");
 
-            var products =
-                await _dbContext.Products
-                    .AsNoTracking()
-                    .Where(x => x.IsActive)
-                    .ToListAsync(
-                        cancellationToken);
-
-            var productsById =
-                products.ToDictionary(
-                    x => x.Id);
-
-            foreach (var item in request.Items)
-            {
-                if (!productsById.ContainsKey(
-                        item.ProductId))
-                {
-                    throw new InvalidOperationException(
-                        "Produto não encontrado.");
-                }
-            }
-
-            var balances =
-                await _dbContext.InventoryMovements
-                    .AsNoTracking()
-                    .GroupBy(
+            var requestedProductIds =
+                request.Items
+                    .Select(
                         x => x.ProductId)
-                    .Select(group =>
-                        new
-                        {
-                            ProductId = group.Key,
-                            Quantity =
-                                group.Sum(
-                                    x => x.Quantity)
-                        })
-                    .ToListAsync(
+                    .ToArray();
+
+            // This is the concurrency boundary for both
+            // immediate sales and stock reservations.
+            // Product rows are always locked in deterministic
+            // order before the availability snapshot is read.
+            var productsById =
+                await InventoryStockCoordinator
+                    .LockProductsAsync(
+                        _dbContext,
+                        requestedProductIds,
+                        requireActive: true,
                         cancellationToken);
 
-            var stockByProduct =
-                balances.ToDictionary(
-                    x => x.ProductId,
-                    x => x.Quantity);
+            var availabilityByProduct =
+                await InventoryStockCoordinator
+                    .GetAvailabilityAsync(
+                        _dbContext,
+                        requestedProductIds,
+                        cancellationToken);
 
             foreach (var item in request.Items)
             {
-                var available =
-                    stockByProduct
-                        .GetValueOrDefault(
-                            item.ProductId);
+                var availability =
+                    availabilityByProduct[
+                        item.ProductId];
 
-                if (available < item.Quantity)
+                if (
+                    availability.AvailableQuantity <
+                    item.Quantity)
                 {
                     throw new InvalidOperationException(
                         $"Estoque insuficiente para " +
                         $"'{productsById[item.ProductId].Name}'. " +
-                        $"Disponível: {available}.");
+                        $"Físico: " +
+                        $"{availability.PhysicalQuantity}. " +
+                        $"Reservado: " +
+                        $"{availability.ReservedQuantity}. " +
+                        $"Disponível: " +
+                        $"{availability.AvailableQuantity}.");
                 }
             }
 
@@ -252,21 +253,39 @@ public sealed class SaleService
                 _dbContext.SaleItems.Add(
                     saleItem);
 
-                var movement =
-                    new InventoryMovement(
-                        requestedItem.ProductId,
-                        warehouse.Id,
-                        InventoryMovementType.Sale,
-                        StockBucket.Normal,
-                        -requestedItem.Quantity,
-                        occurredAtUtc,
-                        referenceType: "SALE",
-                        referenceId: sale.Id,
-                        notes:
-                            "Saída de estoque por venda.");
+                if (
+                    request.StockMode ==
+                    SaleStockMode.Immediate)
+                {
+                    var movement =
+                        new InventoryMovement(
+                            requestedItem.ProductId,
+                            warehouse.Id,
+                            InventoryMovementType.Sale,
+                            StockBucket.Normal,
+                            -requestedItem.Quantity,
+                            occurredAtUtc,
+                            referenceType: "SALE",
+                            referenceId: sale.Id,
+                            notes:
+                                "Saída de estoque por venda.");
 
-                _dbContext.InventoryMovements.Add(
-                    movement);
+                    _dbContext.InventoryMovements.Add(
+                        movement);
+                }
+                else
+                {
+                    var reservation =
+                        new InventoryReservation(
+                            sale.Id,
+                            requestedItem.ProductId,
+                            warehouse.Id,
+                            requestedItem.Quantity,
+                            occurredAtUtc);
+
+                    _dbContext.InventoryReservations.Add(
+                        reservation);
+                }
             }
 
             foreach (
@@ -305,7 +324,11 @@ public sealed class SaleService
                 sale.DeliveryMethod,
                 sale.DeliveryStatus,
                 request.Receivables.Count,
-                scheduledAmount);
+                scheduledAmount)
+            {
+                StockMode =
+                    request.StockMode
+            };
         }
         catch
         {

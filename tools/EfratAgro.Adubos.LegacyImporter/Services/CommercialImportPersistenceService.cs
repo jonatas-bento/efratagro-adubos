@@ -468,6 +468,19 @@ public sealed class CommercialImportPersistenceService
     {
         if (
             _dbContext.ChangeTracker
+                .Entries<
+                    EfratAgro.Adubos.Domain.Inventory.InventoryReservation>()
+                .Any(
+                    entry =>
+                        entry.State ==
+                        EntityState.Added))
+        {
+            throw new InvalidOperationException(
+                "Commercial legacy import attempted to create inventory reservations.");
+        }
+
+        if (
+            _dbContext.ChangeTracker
                 .Entries<InventoryMovement>()
                 .Any(
                     entry =>

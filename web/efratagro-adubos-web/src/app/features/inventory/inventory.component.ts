@@ -51,7 +51,10 @@ export class InventoryComponent {
       this.items().filter(
         item =>
           item.isActive &&
-          item.quantity > 0,
+          (
+            item.availableQuantity ??
+            item.quantity
+          ) > 0,
       ).length,
     );
 
@@ -60,6 +63,32 @@ export class InventoryComponent {
       this.items().reduce(
         (total, item) =>
           total + item.quantity,
+        0,
+      ),
+    );
+
+  readonly totalReserved =
+    computed(() =>
+      this.items().reduce(
+        (total, item) =>
+          total +
+          (
+            item.reservedQuantity ??
+            0
+          ),
+        0,
+      ),
+    );
+
+  readonly totalAvailable =
+    computed(() =>
+      this.items().reduce(
+        (total, item) =>
+          total +
+          (
+            item.availableQuantity ??
+            item.quantity
+          ),
         0,
       ),
     );

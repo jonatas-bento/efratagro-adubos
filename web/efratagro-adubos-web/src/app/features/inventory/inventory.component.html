@@ -10,8 +10,8 @@
     </div>
 
     <p>
-      Consulte os saldos físicos dos produtos
-      no armazém de forma rápida e simples.
+      Consulte estoque físico, reservas comerciais
+      e saldo disponível para novas vendas.
     </p>
   </header>
 
@@ -32,13 +32,33 @@
     </article>
 
     <article class="summary-card">
-      <span>Estoque total</span>
+      <span>Estoque físico</span>
 
       <strong>
         {{ totalQuantity() | number:'1.0-3':'pt-BR' }}
       </strong>
 
-      <small>unidades</small>
+      <small>unidades no armazém</small>
+    </article>
+
+    <article class="summary-card">
+      <span>Reservado</span>
+
+      <strong>
+        {{ totalReserved() | number:'1.0-3':'pt-BR' }}
+      </strong>
+
+      <small>travas / safras</small>
+    </article>
+
+    <article class="summary-card">
+      <span>Disponível</span>
+
+      <strong>
+        {{ totalAvailable() | number:'1.0-3':'pt-BR' }}
+      </strong>
+
+      <small>para novas vendas</small>
     </article>
   </section>
 
@@ -108,16 +128,40 @@
           </div>
 
           <div
-            class="stock"
-            [class.stock-empty]="item.quantity <= 0"
+            class="stock stock-details"
+            [class.stock-empty]="
+              (item.availableQuantity ?? item.quantity) <= 0
+            "
           >
-            <strong>
-              {{ item.quantity | number:'1.0-3':'pt-BR' }}
-            </strong>
+            <div class="stock-line">
+              <span>Físico</span>
 
-            <span>
-              {{ item.quantity === 1 ? 'unidade' : 'unidades' }}
-            </span>
+              <strong>
+                {{ item.quantity | number:'1.0-3':'pt-BR' }}
+              </strong>
+            </div>
+
+            <div class="stock-line">
+              <span>Reservado</span>
+
+              <strong>
+                {{
+                  (item.reservedQuantity ?? 0)
+                    | number:'1.0-3':'pt-BR'
+                }}
+              </strong>
+            </div>
+
+            <div class="stock-line stock-available">
+              <span>Disponível</span>
+
+              <strong>
+                {{
+                  (item.availableQuantity ?? item.quantity)
+                    | number:'1.0-3':'pt-BR'
+                }}
+              </strong>
+            </div>
           </div>
         </article>
       }

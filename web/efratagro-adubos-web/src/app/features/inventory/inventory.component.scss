@@ -285,3 +285,43 @@ h1 {
   font-weight: 700;
   line-height: 1;
 }
+
+/* Trava / Safra inventory details */
+.stock-details {
+  min-width: 170px;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.stock-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.stock-line span {
+  font-size: 0.75rem;
+  opacity: 0.72;
+}
+
+.stock-line strong {
+  font-size: 0.95rem;
+}
+
+.stock-available {
+  padding-top: 0.35rem;
+  margin-top: 0.15rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.stock-available strong {
+  font-size: 1.1rem;
+}
+
+@media (max-width: 640px) {
+  .stock-details {
+    width: 100%;
+    min-width: 0;
+  }
+}

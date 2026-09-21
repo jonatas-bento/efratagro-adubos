@@ -4,6 +4,11 @@ export enum DeliveryMethod {
   WarehousePickup = 3,
 }
 
+export enum SaleStockMode {
+  Immediate = 1,
+  Reserved = 2,
+}
+
 export interface CreateSaleItemRequest {
   productId: string;
   quantity: number;
@@ -19,6 +24,7 @@ export interface CreateSaleReceivableRequest {
 export interface CreateSaleRequest {
   customerId: string;
   deliveryMethod: DeliveryMethod;
+  stockMode: SaleStockMode;
   items: CreateSaleItemRequest[];
   receivables: CreateSaleReceivableRequest[];
 }
@@ -33,6 +39,7 @@ export interface CreateSaleResult {
   occurredAtUtc: string;
   deliveryMethod: DeliveryMethod;
   deliveryStatus: number;
+  stockMode: SaleStockMode;
   receivables: number;
   scheduledAmount: number;
 }

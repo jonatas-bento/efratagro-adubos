@@ -7,8 +7,8 @@
     <h1>Vendas</h1>
 
     <p>
-      Registre uma venda e atualize o estoque
-      automaticamente.
+      Registre vendas com baixa imediata ou
+      reserva para entrega futura.
     </p>
   </header>
 
@@ -22,6 +22,15 @@
             | currency:'BRL':'symbol':'1.2-2':'pt-BR'
         }}
       </strong>
+
+      @if (
+        success()!.stockMode ===
+        stockModes.Reserved
+      ) {
+        <span>
+          · Estoque reservado para entrega futura.
+        </span>
+      }
     </section>
   }
 
@@ -96,6 +105,26 @@
                 [ngValue]="deliveryMethods.WarehousePickup"
               >
                 Retirada no armazém
+              </option>
+            </select>
+          </label>
+
+          <label>
+            <span>Estoque da venda</span>
+
+            <select
+              formControlName="stockMode"
+            >
+              <option
+                [ngValue]="stockModes.Immediate"
+              >
+                Venda normal — baixar agora
+              </option>
+
+              <option
+                [ngValue]="stockModes.Reserved"
+              >
+                Trava / Safra — reservar
               </option>
             </select>
           </label>
@@ -244,7 +273,13 @@
                     >
                       {{ product.productName }}
                       · {{ product.supplierName }}
-                      · {{ product.quantity | number:'1.0-3':'pt-BR' }}
+                      · {{
+                        (
+                          product.availableQuantity ??
+                          product.quantity
+                        )
+                          | number:'1.0-3':'pt-BR'
+                      }}
                       disponíveis
                     </option>
                   }

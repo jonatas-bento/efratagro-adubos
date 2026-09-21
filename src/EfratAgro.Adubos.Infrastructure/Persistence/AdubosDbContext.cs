@@ -30,6 +30,9 @@ public sealed class AdubosDbContext
     public DbSet<InventoryMovement> InventoryMovements =>
         Set<InventoryMovement>();
 
+    public DbSet<InventoryReservation> InventoryReservations =>
+        Set<InventoryReservation>();
+
     public DbSet<LegacyImportBatch> LegacyImportBatches =>
         Set<LegacyImportBatch>();
 

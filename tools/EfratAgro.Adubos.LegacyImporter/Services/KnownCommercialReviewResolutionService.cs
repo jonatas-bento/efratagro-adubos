@@ -526,6 +526,19 @@ public sealed class KnownCommercialReviewResolutionService
 
     private void EnsureOnlyAllowedWrites()
     {
+        if (
+            _dbContext.ChangeTracker
+                .Entries<
+                    EfratAgro.Adubos.Domain.Inventory.InventoryReservation>()
+                .Any(
+                    entry =>
+                        entry.State ==
+                        EntityState.Added))
+        {
+            throw new InvalidOperationException(
+                "Legacy review resolution attempted to create inventory reservations.");
+        }
+
         var forbidden =
             _dbContext.ChangeTracker
                 .Entries()

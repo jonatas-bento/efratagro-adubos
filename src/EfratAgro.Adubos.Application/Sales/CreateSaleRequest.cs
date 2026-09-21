@@ -6,7 +6,11 @@ public sealed record CreateSaleRequest(
     Guid CustomerId,
     IReadOnlyList<CreateSaleItemRequest> Items,
     DeliveryMethod DeliveryMethod,
-    IReadOnlyList<CreateSaleReceivableRequest> Receivables);
+    IReadOnlyList<CreateSaleReceivableRequest> Receivables)
+{
+    public SaleStockMode StockMode { get; init; } =
+        SaleStockMode.Immediate;
+}
 
 public sealed record CreateSaleItemRequest(
     Guid ProductId,

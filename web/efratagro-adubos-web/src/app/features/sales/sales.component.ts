@@ -42,6 +42,7 @@ import {
   DeliveryMethod,
   FinancialInstallmentPreview,
   PaymentCondition,
+  SaleStockMode,
   SaleSummary,
 } from './sale-models';
 import {
@@ -80,6 +81,9 @@ export class SalesComponent {
   readonly deliveryMethods =
     DeliveryMethod;
 
+  readonly stockModes =
+    SaleStockMode;
+
   readonly inventory =
     signal<InventoryItem[]>([]);
 
@@ -104,7 +108,10 @@ export class SalesComponent {
         .filter(
           item =>
             item.isActive &&
-            item.quantity > 0,
+            (
+              item.availableQuantity ??
+              item.quantity
+            ) > 0,
         ),
     );
 
@@ -120,6 +127,15 @@ export class SalesComponent {
         Validators.required,
       ],
 
+      stockMode:
+        this.fb.control<SaleStockMode>(
+          SaleStockMode.Immediate,
+          {
+            validators: [
+              Validators.required,
+            ],
+          },
+        ),
       paymentCondition:
         this.fb.control<PaymentCondition>(
           'cash',
@@ -185,14 +201,18 @@ export class SalesComponent {
   availableFor(
     productId: string,
   ): number {
-    return (
+    const item =
       this.inventory()
         .find(
-          item =>
-            item.productId ===
+          inventoryItem =>
+            inventoryItem.productId ===
             productId,
-        )
-        ?.quantity ?? 0
+        );
+
+    return (
+      item?.availableQuantity ??
+      item?.quantity ??
+      0
     );
   }
 
@@ -336,6 +356,11 @@ export class SalesComponent {
           raw.deliveryMethod,
         ) as DeliveryMethod,
 
+      stockMode:
+        Number(
+          raw.stockMode,
+        ) as SaleStockMode,
+
       items:
         raw.items.map(
           item => ({
@@ -478,6 +503,12 @@ export class SalesComponent {
       .deliveryMethod
       .setValue(
         DeliveryMethod.Delivery,
+      );
+
+    this.form.controls
+      .stockMode
+      .setValue(
+        SaleStockMode.Immediate,
       );
 
     this.form.controls

@@ -4,4 +4,6 @@ export interface InventoryItem {
   supplierName: string;
   isActive: boolean;
   quantity: number;
+  reservedQuantity?: number;
+  availableQuantity?: number;
 }
