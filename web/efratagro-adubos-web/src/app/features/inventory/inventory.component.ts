@@ -1,4 +1,8 @@
 import {
+  DataQualityBannerComponent,
+} from '../../shared/data-quality/data-quality-banner.component';
+
+import {
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -17,6 +21,10 @@ import {
   tap,
 } from 'rxjs';
 
+import {
+  TemporalAsOfFilterComponent,
+} from '../../shared/temporal/temporal-as-of-filter.component';
+
 import { InventoryItem } from './inventory-item';
 import { InventoryService } from './inventory.service';
 
@@ -25,7 +33,9 @@ import { InventoryService } from './inventory.service';
   standalone: true,
   imports: [
     CommonModule,
+    DataQualityBannerComponent,
     FormsModule,
+    TemporalAsOfFilterComponent,
   ],
   templateUrl: './inventory.component.html',
   styleUrl: './inventory.component.scss',
@@ -39,6 +49,9 @@ export class InventoryComponent {
     new Subject<string>();
 
   readonly search = signal('');
+
+  readonly asOf = signal('');
+
   readonly items = signal<InventoryItem[]>([]);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -106,7 +119,11 @@ export class InventoryComponent {
         }),
         switchMap(search =>
           this.inventoryService
-            .getInventory(search)
+            .getInventory(
+              search,
+              this.asOf() ||
+              undefined,
+            )
             .pipe(
               catchError(() => {
                 this.error.set(
@@ -124,6 +141,16 @@ export class InventoryComponent {
       });
   }
 
+  onAsOfChange(
+    value: string,
+  ): void {
+    this.asOf.set(
+      value,
+    );
+
+    this.load();
+  }
+
   onSearchChange(value: string): void {
     this.search.set(value);
     this.searchChanges.next(value);
@@ -134,7 +161,11 @@ export class InventoryComponent {
     this.error.set(null);
 
     this.inventoryService
-      .getInventory()
+      .getInventory(
+        undefined,
+        this.asOf() ||
+        undefined,
+      )
       .pipe(
         catchError(() => {
           this.error.set(

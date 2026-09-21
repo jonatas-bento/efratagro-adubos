@@ -381,11 +381,31 @@
             Histórico
           </span>
 
-          <h2>Vendas recentes</h2>
+          <h2>
+            {{
+              hasHistoryPeriod()
+                ? 'Vendas no período'
+                : 'Vendas recentes'
+            }}
+          </h2>
         </div>
       </div>
 
-      @if (loading()) {
+      <app-data-quality-banner
+        context="commercial"
+        [from]="historyFrom()"
+        [to]="historyTo()"
+      />
+      <app-temporal-period-filter
+        title="Período das vendas"
+        [from]="historyFrom()"
+        [to]="historyTo()"
+        (periodChange)="
+          onHistoryPeriodChange($event)
+        "
+      />
+
+      @if (loading() || historyLoading()) {
         <div class="empty-state">
           Carregando...
         </div>
@@ -430,6 +450,36 @@
               </div>
             </article>
           }
+        </div>
+      }
+
+      @if (historyTotalPages() > 0) {
+        <div class="temporal-pagination">
+          <button
+            type="button"
+            (click)="previousHistoryPage()"
+            [disabled]="historyPage() <= 1"
+          >
+            Anterior
+          </button>
+
+          <span>
+            Página {{ historyPage() }}
+            de {{ historyTotalPages() }}
+            · {{ historyTotalItems() }}
+            registro(s)
+          </span>
+
+          <button
+            type="button"
+            (click)="nextHistoryPage()"
+            [disabled]="
+              historyPage() >=
+              historyTotalPages()
+            "
+          >
+            Próxima
+          </button>
         </div>
       }
     </aside>

@@ -1,4 +1,8 @@
 import {
+  DataQualityBannerComponent,
+} from '../../shared/data-quality/data-quality-banner.component';
+
+import {
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -31,6 +35,14 @@ import {
   CustomersService,
 } from '../customers/customers.service';
 import {
+  PagedResult,
+} from '../../core/models/paged-result';
+import {
+  TemporalPeriod,
+  TemporalPeriodFilterComponent,
+} from '../../shared/temporal/temporal-period-filter.component';
+
+import {
   InventoryItem,
 } from '../inventory/inventory-item';
 import {
@@ -59,7 +71,9 @@ import {
   standalone: true,
   imports: [
     CommonModule,
+    DataQualityBannerComponent,
     ReactiveFormsModule,
+    TemporalPeriodFilterComponent,
   ],
   templateUrl: './sales.component.html',
   styleUrl: './sales.component.scss',
@@ -92,6 +106,24 @@ export class SalesComponent {
 
   readonly recentSales =
     signal<SaleSummary[]>([]);
+
+  readonly historyFrom =
+    signal('');
+
+  readonly historyTo =
+    signal('');
+
+  readonly historyPage =
+    signal(1);
+
+  readonly historyTotalPages =
+    signal(0);
+
+  readonly historyTotalItems =
+    signal(0);
+
+  readonly historyLoading =
+    signal(false);
 
   readonly loading = signal(true);
   readonly saving = signal(false);
@@ -419,6 +451,113 @@ export class SalesComponent {
       });
   }
 
+  onHistoryPeriodChange(
+    period: TemporalPeriod,
+  ): void {
+    this.historyFrom.set(
+      period.from,
+    );
+
+    this.historyTo.set(
+      period.to,
+    );
+
+    this.loadSalesHistory(1);
+  }
+
+  hasHistoryPeriod(): boolean {
+    return Boolean(
+      this.historyFrom() ||
+      this.historyTo(),
+    );
+  }
+
+  previousHistoryPage(): void {
+    if (
+      this.historyPage() <= 1
+    ) {
+      return;
+    }
+
+    this.loadSalesHistory(
+      this.historyPage() - 1,
+    );
+  }
+
+  nextHistoryPage(): void {
+    if (
+      this.historyPage() >=
+      this.historyTotalPages()
+    ) {
+      return;
+    }
+
+    this.loadSalesHistory(
+      this.historyPage() + 1,
+    );
+  }
+
+  private loadSalesHistory(
+    page: number,
+  ): void {
+    this.historyLoading.set(true);
+    this.error.set(null);
+
+    this.salesService
+      .getSalesPage({
+        page,
+        pageSize: 20,
+        from:
+          this.historyFrom() ||
+          undefined,
+        to:
+          this.historyTo() ||
+          undefined,
+      })
+      .pipe(
+        catchError(response => {
+          this.error.set(
+            response?.error?.error ??
+            'Não foi possível carregar o histórico de vendas.',
+          );
+
+          return of(null);
+        }),
+        finalize(() =>
+          this.historyLoading.set(false),
+        ),
+      )
+      .subscribe(result => {
+        if (!result) {
+          return;
+        }
+
+        this.applySalesPage(
+          result,
+        );
+      });
+  }
+
+  private applySalesPage(
+    result: PagedResult<SaleSummary>,
+  ): void {
+    this.recentSales.set(
+      result.items,
+    );
+
+    this.historyPage.set(
+      result.page,
+    );
+
+    this.historyTotalPages.set(
+      result.totalPages,
+    );
+
+    this.historyTotalItems.set(
+      result.totalItems,
+    );
+  }
+
   private createItemGroup() {
     return this.fb.group({
       productId: [
@@ -457,7 +596,16 @@ export class SalesComponent {
 
       sales:
         this.salesService
-          .getRecentSales(20),
+          .getSalesPage({
+            page: 1,
+            pageSize: 20,
+            from:
+              this.historyFrom() ||
+              undefined,
+            to:
+              this.historyTo() ||
+              undefined,
+          }),
 
       customers:
         this.customersService
@@ -484,7 +632,7 @@ export class SalesComponent {
           data.inventory,
         );
 
-        this.recentSales.set(
+        this.applySalesPage(
           data.sales,
         );
 

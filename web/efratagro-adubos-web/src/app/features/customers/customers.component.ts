@@ -1,4 +1,8 @@
 import {
+  DataQualityBannerComponent,
+} from '../../shared/data-quality/data-quality-banner.component';
+
+import {
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -21,6 +25,11 @@ import {
 } from 'rxjs';
 
 import {
+  TemporalPeriod,
+  TemporalPeriodFilterComponent,
+} from '../../shared/temporal/temporal-period-filter.component';
+
+import {
   CustomerDetails,
   CustomerListItem,
 } from './customer-models';
@@ -33,7 +42,9 @@ import {
   standalone: true,
   imports: [
     CommonModule,
+    DataQualityBannerComponent,
     ReactiveFormsModule,
+    TemporalPeriodFilterComponent,
   ],
   templateUrl: './customers.component.html',
   styleUrl: './customers.component.scss',
@@ -69,6 +80,12 @@ export class CustomersComponent {
 
   readonly search =
     this.fb.control('');
+
+  readonly periodFrom =
+    signal('');
+
+  readonly periodTo =
+    signal('');
 
   readonly customerForm =
     this.fb.group({
@@ -130,6 +147,36 @@ export class CustomersComponent {
       .subscribe(() =>
         this.load(),
       );
+  }
+
+  onPeriodChange(
+    period: TemporalPeriod,
+  ): void {
+    this.periodFrom.set(
+      period.from,
+    );
+
+    this.periodTo.set(
+      period.to,
+    );
+
+    const selectedId =
+      this.selectedCustomer()?.id;
+
+    this.load();
+
+    if (selectedId) {
+      this.openCustomer(
+        selectedId,
+      );
+    }
+  }
+
+  hasPeriod(): boolean {
+    return Boolean(
+      this.periodFrom() ||
+      this.periodTo(),
+    );
   }
 
   toggleForm(): void {
@@ -196,7 +243,10 @@ export class CustomersComponent {
     this.error.set(null);
 
     this.customersService
-      .getCustomer(customerId)
+      .getCustomer(
+        customerId,
+        this.currentPeriod(),
+      )
       .pipe(
         catchError(() => {
           this.error.set(
@@ -222,12 +272,25 @@ export class CustomersComponent {
     this.selectedCustomer.set(null);
   }
 
+  private currentPeriod() {
+    return {
+      from:
+        this.periodFrom() ||
+        undefined,
+      to:
+        this.periodTo() ||
+        undefined,
+    };
+  }
+
   private load(): void {
     this.loading.set(true);
 
     this.customersService
       .getCustomers(
         this.search.value,
+        1000,
+        this.currentPeriod(),
       )
       .pipe(
         catchError(() => {
